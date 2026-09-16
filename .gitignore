@@ -1,0 +1,9 @@
+node_modules/
+dist/
+out/
+wasm/
+*.vsix
+.direnv/
+result
+.DS_Store
+.vscode-test/

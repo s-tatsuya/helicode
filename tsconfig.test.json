@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "out",
+    "noEmit": false,
+    "sourceMap": false
+  },
+  "include": ["src/core/**/*.ts", "src/engine/keymap.ts", "src/engine/defaults.ts", "test/**/*.ts"]
+}

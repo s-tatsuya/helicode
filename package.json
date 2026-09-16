@@ -1,0 +1,1284 @@
+{
+  "name": "helicode",
+  "displayName": "Helicode - Helix keybindings",
+  "description": "Faithful Helix editor keybindings for VS Code: selection-first editing, multiple cursors, match mode (mi/ma/ms/mr/md), jump labels (gw), tree-sitter textobjects (WASM) and : commands.",
+  "version": "0.1.0",
+  "publisher": "s-tatsuya",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/s-tatsuya/helicode"
+  },
+  "engines": {
+    "vscode": "^1.104.0"
+  },
+  "categories": [
+    "Keymaps",
+    "Other"
+  ],
+  "keywords": [
+    "helix",
+    "kakoune",
+    "modal",
+    "vim",
+    "keybindings",
+    "tree-sitter"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "extensionKind": [
+    "ui",
+    "workspace"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "helicode.toggle",
+        "title": "Helicode: Toggle Helix keybindings"
+      },
+      {
+        "command": "helicode.normalMode",
+        "title": "Helicode: Enter normal mode"
+      },
+      {
+        "command": "helicode.typed",
+        "title": "Helicode: Run : command"
+      },
+      {
+        "command": "helicode.showKeymapHelp",
+        "title": "Helicode: Show keymap reference"
+      },
+      {
+        "command": "helicode.showLog",
+        "title": "Helicode: Show log"
+      }
+    ],
+    "keybindings": [
+      {
+        "key": "escape",
+        "command": "helicode.key",
+        "args": {
+          "key": "esc"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !suggestWidgetVisible && !findWidgetVisible && !renameInputVisible && !parameterHintsVisible"
+      },
+      {
+        "key": "enter",
+        "command": "helicode.key",
+        "args": {
+          "key": "ret"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "tab",
+        "command": "helicode.key",
+        "args": {
+          "key": "tab"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "shift+tab",
+        "command": "helicode.key",
+        "args": {
+          "key": "S-tab"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "backspace",
+        "command": "helicode.key",
+        "args": {
+          "key": "backspace"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "shift+backspace",
+        "command": "helicode.key",
+        "args": {
+          "key": "S-backspace"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "delete",
+        "command": "helicode.key",
+        "args": {
+          "key": "del"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "insert",
+        "command": "helicode.key",
+        "args": {
+          "key": "ins"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "up",
+        "command": "helicode.key",
+        "args": {
+          "key": "up"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+up",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-up"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "shift+up",
+        "command": "helicode.key",
+        "args": {
+          "key": "S-up"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "down",
+        "command": "helicode.key",
+        "args": {
+          "key": "down"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+down",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-down"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "shift+down",
+        "command": "helicode.key",
+        "args": {
+          "key": "S-down"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "left",
+        "command": "helicode.key",
+        "args": {
+          "key": "left"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+left",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-left"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "shift+left",
+        "command": "helicode.key",
+        "args": {
+          "key": "S-left"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "right",
+        "command": "helicode.key",
+        "args": {
+          "key": "right"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+right",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-right"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "shift+right",
+        "command": "helicode.key",
+        "args": {
+          "key": "S-right"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "home",
+        "command": "helicode.key",
+        "args": {
+          "key": "home"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+home",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-home"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "shift+home",
+        "command": "helicode.key",
+        "args": {
+          "key": "S-home"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "end",
+        "command": "helicode.key",
+        "args": {
+          "key": "end"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+end",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-end"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "shift+end",
+        "command": "helicode.key",
+        "args": {
+          "key": "S-end"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "pageup",
+        "command": "helicode.key",
+        "args": {
+          "key": "pageup"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+pageup",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-pageup"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "shift+pageup",
+        "command": "helicode.key",
+        "args": {
+          "key": "S-pageup"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "pagedown",
+        "command": "helicode.key",
+        "args": {
+          "key": "pagedown"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+pagedown",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-pagedown"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "shift+pagedown",
+        "command": "helicode.key",
+        "args": {
+          "key": "S-pagedown"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+shift+down",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-S-down"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+a",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-a"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+b",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-b"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+c",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-c"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+d",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-d"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+f",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-f"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+i",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-i"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+o",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-o"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+s",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-s"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+u",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-u"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+w",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-w"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+x",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-x"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+z",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-z"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+h",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-h"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+j",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-j"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+k",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-k"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+l",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-l"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+q",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-q"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+t",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-t"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+v",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-v"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+e",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-e"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+y",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-y"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+n",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-n"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+p",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-p"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+g",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-g"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "ctrl+r",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-r"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+.",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-."
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+`",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-`"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+d",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-d"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+c",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-c"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+shift+c",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-C"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+s",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-s"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+-",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-minus"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+shift+-",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-_"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+;",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-;"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+shift+;",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-:"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+o",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-o"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+i",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-i"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+shift+i",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-I"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+p",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-p"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+n",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-n"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+e",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-e"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+b",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-b"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+a",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-a"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+x",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-x"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+u",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-u"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+shift+u",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-U"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+shift+j",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-J"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+shift+k",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-K"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+,",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-,"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+shift+9",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-("
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+shift+0",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-)"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+shift+\\",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-|"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+shift+1",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-!"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+shift+8",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-*"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+k",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-k"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+j",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-j"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+h",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-h"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+l",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-l"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+w",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-w"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+f",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-f"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+t",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-t"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+g",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-g"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+m",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-m"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+r",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-r"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+v",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-v"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+y",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-y"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+z",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-z"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "alt+q",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-q"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+      },
+      {
+        "key": "escape",
+        "command": "helicode.key",
+        "args": {
+          "key": "esc"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert' && !suggestWidgetVisible && !findWidgetVisible && !renameInputVisible && !parameterHintsVisible && !inlineSuggestionVisible && !inSnippetMode"
+      },
+      {
+        "key": "ctrl+s",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-s"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+      },
+      {
+        "key": "ctrl+x",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-x"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert' && !suggestWidgetVisible"
+      },
+      {
+        "key": "ctrl+r",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-r"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+      },
+      {
+        "key": "ctrl+w",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-w"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+      },
+      {
+        "key": "alt+backspace",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-backspace"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+      },
+      {
+        "key": "alt+d",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-d"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+      },
+      {
+        "key": "alt+delete",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-del"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+      },
+      {
+        "key": "ctrl+u",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-u"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+      },
+      {
+        "key": "ctrl+k",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-k"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+      },
+      {
+        "key": "ctrl+h",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-h"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+      },
+      {
+        "key": "ctrl+d",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-d"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+      },
+      {
+        "key": "ctrl+j",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-j"
+        },
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert' && !suggestWidgetVisible"
+      },
+      {
+        "key": "ctrl+alt+escape",
+        "command": "helicode.normalMode",
+        "when": "editorTextFocus && helicode.active"
+      },
+      {
+        "key": "j",
+        "command": "list.focusDown",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "k",
+        "command": "list.focusUp",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "g g",
+        "command": "list.focusFirst",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "shift+g",
+        "command": "list.focusLast",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "enter",
+        "command": "notebook.cell.edit",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "i",
+        "command": "notebook.cell.edit",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "a",
+        "command": "notebook.cell.edit",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "o",
+        "command": "notebook.cell.insertCodeCellBelow",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "shift+o",
+        "command": "notebook.cell.insertCodeCellAbove",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "d d",
+        "command": "notebook.cell.delete",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "y y",
+        "command": "notebook.cell.copy",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "x",
+        "command": "notebook.cell.cut",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "p",
+        "command": "notebook.cell.paste",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "shift+p",
+        "command": "notebook.cell.pasteAbove",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "u",
+        "command": "notebook.undo",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "shift+u",
+        "command": "notebook.redo",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "shift+j",
+        "command": "notebook.cell.moveDown",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "shift+k",
+        "command": "notebook.cell.moveUp",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "m",
+        "command": "notebook.cell.changeToMarkdown",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "c",
+        "command": "notebook.cell.changeToCode",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "z c",
+        "command": "notebook.cell.collapseCellInput",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "z o",
+        "command": "notebook.cell.expandCellInput",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "shift+z shift+c",
+        "command": "notebook.cell.collapseCellOutput",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "shift+z shift+o",
+        "command": "notebook.cell.expandCellOutput",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "ctrl+d",
+        "command": "notebook.cell.focusInOutput",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "space enter",
+        "command": "notebook.cell.execute",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "space a",
+        "command": "notebook.execute",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "space c",
+        "command": "notebook.clearAllCellsOutputs",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "space r",
+        "command": "jupyter.restartkernel",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "escape",
+        "command": "notebook.cell.quitEdit",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active"
+      },
+      {
+        "key": "ctrl+w h",
+        "command": "workbench.action.focusLeftGroup",
+        "when": "activeWebviewPanelId == 'markdown.preview' && helicode.active"
+      },
+      {
+        "key": "ctrl+w l",
+        "command": "workbench.action.focusRightGroup",
+        "when": "activeWebviewPanelId == 'markdown.preview' && helicode.active"
+      },
+      {
+        "key": "ctrl+w j",
+        "command": "workbench.action.focusBelowGroup",
+        "when": "activeWebviewPanelId == 'markdown.preview' && helicode.active"
+      },
+      {
+        "key": "ctrl+w k",
+        "command": "workbench.action.focusAboveGroup",
+        "when": "activeWebviewPanelId == 'markdown.preview' && helicode.active"
+      },
+      {
+        "key": "ctrl+w q",
+        "command": "workbench.action.closeActiveEditor",
+        "when": "activeWebviewPanelId == 'markdown.preview' && helicode.active"
+      },
+      {
+        "key": "ctrl+w w",
+        "command": "workbench.action.focusNextGroup",
+        "when": "activeWebviewPanelId == 'markdown.preview' && helicode.active"
+      }
+    ],
+    "configuration": {
+      "title": "Helicode",
+      "properties": {
+        "helicode.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Helix keybindings."
+        },
+        "helicode.search.smartCase": {
+          "type": "boolean",
+          "default": true,
+          "description": "Case-insensitive search unless the pattern contains an uppercase letter (Helix search.smart-case)."
+        },
+        "helicode.search.wrapAround": {
+          "type": "boolean",
+          "default": true,
+          "description": "Wrap around the document when searching (Helix search.wrap-around)."
+        },
+        "helicode.scrolloff": {
+          "type": "number",
+          "default": 5,
+          "description": "Lines of context kept around the cursor when paging (Helix scrolloff)."
+        },
+        "helicode.jumpLabelAlphabet": {
+          "type": "string",
+          "default": "abcdefghijklmnopqrstuvwxyz",
+          "description": "Characters used for `gw` jump labels (Helix jump-label-alphabet)."
+        },
+        "helicode.defaultYankRegister": {
+          "type": "string",
+          "default": "\"",
+          "description": "Register used by yank/delete/paste when none is selected (Helix default-yank-register). Use \"+\" to yank to the system clipboard."
+        },
+        "helicode.textWidth": {
+          "type": "number",
+          "default": 80,
+          "description": "Default width for :reflow (Helix text-width)."
+        },
+        "helicode.shell": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Shell command used for | ! $ and :sh, e.g. [\"zsh\", \"-c\"]. Defaults to $SHELL -c."
+        },
+        "helicode.openLineUsesEditorIndent": {
+          "type": "boolean",
+          "default": true,
+          "description": "After `o`/`O`, ask VS Code to re-indent the new line using language indentation rules."
+        },
+        "helicode.notebook.escapeQuitsCellEdit": {
+          "type": "boolean",
+          "default": true,
+          "description": "In notebook cells, Escape in normal mode (with nothing pending) leaves cell editing and focuses the cell list."
+        },
+        "helicode.treeSitter.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable tree-sitter (WASM) powered textobjects, bracket matching and syntax node selection."
+        },
+        "helicode.treeSitter.maxFileSizeKB": {
+          "type": "number",
+          "default": 2048,
+          "description": "Documents larger than this are not parsed with tree-sitter."
+        },
+        "helicode.treeSitter.extraGrammars": {
+          "type": "object",
+          "default": {},
+          "markdownDescription": "Additional grammars keyed by VS Code language id: `{ \"lua\": { \"wasm\": \"/path/tree-sitter-lua.wasm\", \"queries\": \"/path/queries\", \"language\": \"lua\" } }`. `queries` is a directory containing `<language>/textobjects.scm` (Helix layout).",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "wasm": {
+                "type": "string"
+              },
+              "queries": {
+                "type": "string"
+              },
+              "language": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "helicode.keys": {
+          "type": "object",
+          "default": {},
+          "markdownDescription": "Keymap overrides in Helix `config.toml` style, keyed by mode: `{ \"normal\": { \"C-s\": \":w\", \"g\": { \"a\": \"code_action\" } }, \"insert\": { \"j\": { \"k\": \"normal_mode\" } } }`. Values are Helix command names, `:typed commands`, or arrays of commands.",
+          "properties": {
+            "normal": {
+              "type": "object"
+            },
+            "select": {
+              "type": "object"
+            },
+            "insert": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node scripts/gen-keybindings.mjs && node esbuild.mjs",
+    "build:prod": "node scripts/gen-keybindings.mjs && node esbuild.mjs --production",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node scripts/build-tests.mjs && node --test \"out/test/**/*.cjs\"",
+    "check-queries": "node scripts/check-queries.mjs",
+    "test:integration": "npm run build && node scripts/run-integration.mjs",
+    "package": "npm run typecheck && npm run test && npm run build:prod && vsce package --no-dependencies",
+    "gen-keybindings": "node scripts/gen-keybindings.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.11",
+    "@types/vscode": "^1.104.0",
+    "@vscode/test-electron": "^3.1.0",
+    "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@vscode/tree-sitter-wasm": "0.3.1",
+    "web-tree-sitter": "^0.27.0"
+  }
+}
