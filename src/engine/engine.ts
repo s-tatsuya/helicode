@@ -94,6 +94,8 @@ export class Engine {
   private nextKeyCb: ((key: Key) => void | Promise<void>) | undefined;
   /** Resolves when the running command asks for another key, releasing the key queue. */
   private keyWaiter: (() => void) | undefined;
+  /** The command currently in flight (it may be suspended waiting for a key). */
+  private runningCommand: Promise<void> | undefined;
   /** Command name currently awaiting keys (for the status line hint). */
   private nextKeyHint: string | undefined;
 
@@ -355,6 +357,9 @@ export class Engine {
       await this.untilDoneOrWaiting(async () => {
         try {
           await cb(key);
+          // The callback usually just resumes the suspended command; wait for
+          // that command to finish (or to ask for yet another key).
+          if (this.runningCommand) await this.runningCommand;
         } catch (e) {
           this.setError(e instanceof Error ? e.message : String(e));
         }
@@ -399,7 +404,7 @@ export class Engine {
       case 'matched': {
         const count = this.count;
         this.count = undefined;
-        await this.untilDoneOrWaiting(() => this.execute(result.command, { count, register, editor }));
+        await this.untilDoneOrWaiting(() => this.execute(result.command, { count, register, editor }), true);
         break;
       }
       case 'pending':
@@ -420,12 +425,17 @@ export class Engine {
    * as `f`, `r`, `mi` that wait for more input. The remaining work continues
    * when the next key invokes the registered callback.
    */
-  private async untilDoneOrWaiting(work: () => Promise<void>): Promise<void> {
+  private async untilDoneOrWaiting(work: () => Promise<void>, isCommand = false): Promise<void> {
     const waiting = new Promise<void>((resolve) => {
       this.keyWaiter = resolve;
     });
-    const p = work();
-    p.catch(() => undefined);
+    const p = work().catch(() => undefined);
+    if (isCommand) {
+      this.runningCommand = p;
+      void p.finally(() => {
+        if (this.runningCommand === p) this.runningCommand = undefined;
+      });
+    }
     await Promise.race([p, waiting]);
     this.keyWaiter = undefined;
   }
@@ -472,7 +482,7 @@ export class Engine {
     const hit = this.keymaps.insert.get(key);
     if (typeof hit === 'string') {
       if (this.currentInsert) this.currentInsert.keys.push(key);
-      await this.untilDoneOrWaiting(() => this.execute(hit, { editor }));
+      await this.untilDoneOrWaiting(() => this.execute(hit, { editor }), true);
       return;
     }
     if (hit instanceof KeyTrieNode) {
