@@ -10,9 +10,9 @@ import { Engine } from '../engine/engine';
 import { from, to, fragment, primary, cursor as rangeCursor, selection as mkSelection, range as mkRange, lineRange } from '../core/range';
 import { gotoLineWithoutJumplist } from '../engine/commands/movement';
 import { pasteImpl } from '../engine/commands/changes';
-import { shellImpl, ShellBehavior, runShell } from '../engine/commands/shell';
+import { shellImpl, ShellBehavior, runShell, insertOutputAtSelections } from '../engine/commands/shell';
 import { getSyntax, showLog, bundledGrammars, supportsLanguage } from '../treesitter';
-import { vsCommand, exitSelectMode } from '../engine/commands/util';
+import { vsCommand, vsCommandAndSync, exitSelectMode } from '../engine/commands/util';
 import { Change } from '../core/changes';
 import { lineEnd } from '../core/text';
 
@@ -454,8 +454,47 @@ def('run-shell-command', ['sh', '!'], 'Run a shell command', async (cx, _a, _b, 
     return;
   }
   const doc = await vscode.workspace.openTextDocument({ content: out, language: 'plaintext' });
-  await vscode.window.showTextDocument(doc, { preview: true, viewColumn: vscode.ViewColumn.Beside, preserveFocus: true });
+  const where = vscode.workspace.getConfiguration('helicode').get<'beside' | 'here' | 'below'>('shell.output', 'beside');
+  if (where === 'below') await vsCommand('workbench.action.newGroupBelow');
+  await vscode.window.showTextDocument(doc, { preview: true, viewColumn: where === 'beside' ? vscode.ViewColumn.Beside : vscode.ViewColumn.Active, preserveFocus: where === 'beside' });
 });
+def(
+  'popup',
+  ['pop'],
+  'Run a command in a Corral popup terminal (interactive, in a floating window) and put its output at the selections: replaces a non-empty selection, otherwise inserts at the cursor. `:popup!` only runs the command. Needs the Corral extension.',
+  async (cx, _a, bang, raw) => {
+    if (!raw.trim()) {
+      cx.setError('usage: :popup <command>');
+      return;
+    }
+    const available = (await vscode.commands.getCommands(true)).includes('corral.popup');
+    if (!available) {
+      cx.setError(':popup needs the Corral extension (corral.popup command not found)');
+      return;
+    }
+    const p = primary(cx.selection);
+    const selectionText = to(p) - from(p) > 1 ? fragment(cx.doc.text, p) : undefined;
+    const folder = vscode.workspace.getWorkspaceFolder(cx.vs.document.uri) ?? vscode.workspace.workspaceFolders?.[0];
+    cx.setStatus(`popup: ${raw}`);
+    const res = (await vscode.commands.executeCommand('corral.popup', { command: raw, selection: selectionText, cwd: folder?.uri.fsPath, returnOutput: true })) as
+      | { output: string; exitCode?: number; cancelled?: boolean; captured: boolean }
+      | undefined;
+    if (!res || res.cancelled) {
+      cx.setStatus('popup cancelled');
+      return;
+    }
+    if (bang) {
+      cx.setStatus(`popup finished (${res.exitCode ?? '?'})`);
+      return;
+    }
+    if (!res.captured) {
+      cx.setError('popup output was not captured (terminal shell integration unavailable)');
+      return;
+    }
+    await insertOutputAtSelections(cx, res.output, selectionText !== undefined ? ShellBehavior.Replace : ShellBehavior.Insert);
+    cx.setStatus(`popup: inserted ${res.output.length} chars (exit ${res.exitCode ?? '?'})`);
+  },
+);
 def('reset-diff-change', ['diffget', 'diffg'], 'Reset the diff change at the cursor position.', () => vsCommand('git.revertSelectedRanges'));
 def('clear-register', [], 'Clear given register. If no argument is provided, clear all registers.', (cx, args) => {
   cx.engine.registers.clear(args[0]);
@@ -532,6 +571,26 @@ def('helicode-toggle', [], 'Enable/disable Helicode key handling.', () => vsComm
 def('keymap', [], 'Show the Helicode keymap reference.', () => vsCommand('helicode.showKeymapHelp'));
 def('tree-sitter-grammars', [], 'List bundled tree-sitter grammars.', (cx) => cx.setStatus('bundled grammars: ' + bundledGrammars().join(', ')));
 def('markdown-preview', ['preview'], 'Open the markdown preview to the side (VS Code built-in).', () => vsCommand('markdown.showPreviewToSide'));
+def(
+  'vscode-command',
+  ['vsc'],
+  'Run a VS Code command by id: `:vsc <command.id> [json args...]`. Lets `helicode.keys` bind keys to any extension command (e.g. Corral panes).',
+  async (cx, args) => {
+    if (args.length === 0) {
+      cx.setError('usage: :vscode-command <command.id> [json-arg ...]');
+      return;
+    }
+    const [id, ...rest] = args;
+    const parsed = rest.map((a) => {
+      try {
+        return JSON.parse(a);
+      } catch {
+        return a;
+      }
+    });
+    await vsCommandAndSync(cx, id, ...parsed);
+  },
+);
 
 // ---------------------------------------------------------------------------
 // Options
