@@ -1254,6 +1254,21 @@
               "type": "object"
             }
           }
+        },
+        "helicode.shell.output": {
+          "type": "string",
+          "enum": [
+            "beside",
+            "here",
+            "below"
+          ],
+          "enumDescriptions": [
+            "Open the output beside the current editor without taking focus.",
+            "Open the output in the current editor group.",
+            "Split the current group down and open the output there."
+          ],
+          "default": "beside",
+          "description": "Where `:sh` / `:run-shell-command` shows its output."
         }
       }
     }

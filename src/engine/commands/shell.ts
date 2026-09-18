@@ -95,6 +95,36 @@ export async function shellImpl(cx: CommandContext, command: string, behavior: S
   exitSelectMode(cx);
 }
 
+/**
+ * Put `output` at every selection: replace it, or insert before / append after
+ * it. Used by `:popup` (output produced elsewhere, e.g. a Corral popup terminal).
+ */
+export async function insertOutputAtSelections(cx: CommandContext, output: string, behavior: ShellBehavior.Replace | ShellBehavior.Insert | ShellBehavior.Append): Promise<void> {
+  const sel = cx.selection;
+  const changes: Change[] = [];
+  const ranges: Range[] = new Array(sel.ranges.length);
+  let offs = 0;
+  const order = sel.ranges.map((r, i) => ({ r, i })).sort((a, b) => from(a.r) - from(b.r));
+  for (const { r, i } of order) {
+    let f: number;
+    let t: number;
+    if (behavior === ShellBehavior.Replace) {
+      f = from(r);
+      t = to(r);
+    } else if (behavior === ShellBehavior.Insert) {
+      f = t = from(r);
+    } else {
+      f = t = to(r);
+    }
+    changes.push({ from: f, to: t, text: output });
+    const start = f + offs;
+    ranges[i] = withDirection(mkRange(start, start + output.length), direction(r));
+    offs += output.length - (t - f);
+  }
+  await cx.editor.apply(changes, { selection: mkSelection(ranges, sel.primaryIndex) });
+  exitSelectMode(cx);
+}
+
 function shellPrompt(prompt: string, behavior: ShellBehavior): CommandFn {
   return async (cx) => {
     const cmd = await inputPrompt(cx, { prompt, register: '|' });

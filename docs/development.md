@@ -2,7 +2,8 @@
 
 Everything runs inside the Nix dev shell (`flake.nix`): Node 22, npm, git,
 jq and the tree-sitter CLI. Nothing is installed globally; `node_modules/`
-lives in the repository.
+lives in the repository. Without Nix (Windows, or any machine with Node 22
+installed) the same npm scripts work as-is; see "Windows" below.
 
 ```sh
 nix develop            # or: direnv allow   (uses .envrc -> `use flake`)
@@ -18,6 +19,22 @@ code --install-extension helicode-0.1.0.vsix
 
 `npm run watch` keeps `dist/extension.js` up to date; press F5 in VS Code
 ("Run Extension") to launch an Extension Development Host.
+
+## Windows
+
+```powershell
+winget install OpenJS.NodeJS.LTS
+npm ci
+npm run typecheck; npm test; npm run build
+npm run package
+code --install-extension .\helicode-0.1.0.vsix
+```
+
+The scripts are plain Node (`scripts/*.mjs`, `esbuild.mjs`), so nothing here
+needs a POSIX shell. `npm run check-queries` needs the `tree-sitter` CLI
+(`npm i -g tree-sitter-cli`) and is optional. GitHub Actions
+(`.github/workflows/ci.yml`) runs typecheck, tests and packaging on
+`windows-latest`, `macos-latest` and `ubuntu-latest` and uploads the `.vsix`.
 
 ## Layout
 

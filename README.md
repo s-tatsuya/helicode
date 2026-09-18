@@ -21,6 +21,10 @@ into VS Code commands:
   insert), `Alt-.` (repeat last motion), jumplist (`Ctrl-o`/`Ctrl-i`/`Ctrl-s`).
 - **Notebooks.** Cell editors use the full Helix model; the cell list gets
   Helix-style navigation (`j`/`k`/`gg`/`G`/`o`/`O`/`dd`/`yy`/`p`/`u`).
+- **Any VS Code command from Helix keys.** `:vscode-command` / `:vsc <id> [json args]`
+  runs a VS Code command and can be bound in `helicode.keys`, e.g. to reach
+  [Corral](https://github.com/s-tatsuya/corral) pane commands from `Ctrl-w`:
+  `"C-w": { "c": ":vsc corral.newTerminal" }`.
 
 See [docs/keymap.md](docs/keymap.md) for the complete coverage matrix and
 [docs/commands.md](docs/commands.md) for `:` commands.
@@ -41,6 +45,30 @@ code --install-extension helicode-0.1.0.vsix
 For development, open the folder in VS Code and press F5 (Run Extension). The
 `npm run watch` task rebuilds `dist/extension.js` on change.
 
+### Windows (no Nix)
+
+Only Node.js 22 is needed; the build scripts are plain Node and run in
+PowerShell or cmd.
+
+```powershell
+winget install OpenJS.NodeJS.LTS        # or nvm-windows / fnm; Node 22 or newer
+git clone <this repo> helicode; cd helicode
+npm ci
+npm run package                          # typecheck + tests + build + helicode-0.1.0.vsix
+code --install-extension .\helicode-0.1.0.vsix
+```
+
+If PowerShell refuses to run `npm` (`npm.ps1 cannot be loaded`), run
+`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once or call `npm.cmd`.
+`npm run test:integration` also works on Windows (it downloads VS Code into
+`.vscode-test\`). The `helicode.shell` commands (`|`, `!`, `:sh`) use
+PowerShell on Windows unless you set `helicode.shell`. For a Dev Container /
+WSL workflow, build inside the container instead and install the `.vsix`
+there; see the Corral repository's `docs/devcontainer.md`.
+
+Every push is also built on Windows, macOS and Linux by GitHub Actions
+(`.github/workflows/ci.yml`), which uploads the `.vsix` as an artifact.
+
 ## Configuration
 
 | Setting | Default | Description |
@@ -52,7 +80,8 @@ For development, open the folder in VS Code and press F5 (Run Extension). The
 | `helicode.jumpLabelAlphabet` | `abcdefghijklmnopqrstuvwxyz` | Characters used for `gw` labels |
 | `helicode.defaultYankRegister` | `"` | Set to `+` to yank/paste through the system clipboard |
 | `helicode.textWidth` | `80` | Width for `:reflow` |
-| `helicode.shell` | `[]` (`$SHELL -c`) | Shell used by `\|`, `!`, `$`, `:sh` |
+| `helicode.shell` | `[]` (`$SHELL -c`, PowerShell on Windows) | Shell used by `\|`, `!`, `$`, `:sh` |
+| `helicode.shell.output` | `beside` | Where `:sh` output opens: `beside`, `here`, `below` |
 | `helicode.openLineUsesEditorIndent` | `true` | `o`/`O` re-indent with language rules |
 | `helicode.notebook.escapeQuitsCellEdit` | `true` | `Esc` in normal mode leaves a notebook cell |
 | `helicode.treeSitter.enabled` | `true` | Enable WASM tree-sitter features |
