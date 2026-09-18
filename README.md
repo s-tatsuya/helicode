@@ -21,6 +21,12 @@ into VS Code commands:
   insert), `Alt-.` (repeat last motion), jumplist (`Ctrl-o`/`Ctrl-i`/`Ctrl-s`).
 - **Notebooks.** Cell editors use the full Helix model; the cell list gets
   Helix-style navigation (`j`/`k`/`gg`/`G`/`o`/`O`/`dd`/`yy`/`p`/`u`).
+- **Corral integration.** With the [Corral](https://github.com/s-tatsuya/corral)
+  extension installed, `Ctrl-w` window mode gains `c` (terminal), `S`/`V`
+  (split with a shell), `a`/`A`/`i`/`e` (agents), `m`/`D` (review comments),
+  `d`/`]`/`[` (agent changes), `P` (popup), `;` (last pane), `W` (worktree);
+  `:corral <cmd>` runs the Corral CLI and `:popup <cmd>` inserts a popup's
+  output. Without Corral these keys only show a status message.
 - **Any VS Code command from Helix keys.** `:vscode-command` / `:vsc <id> [json args]`
   runs a VS Code command and can be bound in `helicode.keys`, e.g. to reach
   [Corral](https://github.com/s-tatsuya/corral) pane commands from `Ctrl-w`:

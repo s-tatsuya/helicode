@@ -12,6 +12,7 @@ import * as un from './unimpaired';
 import * as vw from './view';
 import * as sh from './shell';
 import * as ins from './insert';
+import * as co from './corral';
 import { gotoWord, extendToWord } from '../../vscode/labels';
 
 type Table = Record<string, [string, CommandFn]>;
@@ -233,6 +234,23 @@ export function registerCommands(engine: Engine): void {
     goto_prev_entry: ['Goto previous entry', un.gotoPrevEntry],
     goto_next_xml_element: ['Goto next (X)HTML element', un.gotoNextXmlElement],
     goto_prev_xml_element: ['Goto previous (X)HTML element', un.gotoPrevXmlElement],
+
+    // ---- Corral (panes / agents / review); no-ops without the Corral extension ----
+    corral_new_terminal: ['Corral: new terminal tab in this pane', co.corralNewTerminal],
+    corral_split_down: ['Corral: split down with a new shell', co.corralSplitDown],
+    corral_split_right: ['Corral: split right with a new shell', co.corralSplitRight],
+    corral_pick_agent: ['Corral: jump to an agent pane', co.corralPickAgent],
+    corral_spawn_agent: ['Corral: spawn an agent', co.corralSpawnAgent],
+    corral_prompt_agent: ['Corral: send a prompt to an agent', co.corralPromptAgent],
+    corral_ask_agent: ['Corral: ask an agent about the selection', co.corralAskAgent],
+    corral_comment_here: ['Corral: review comment at the cursor', co.corralCommentHere],
+    corral_send_review: ['Corral: send review comments to an agent', co.corralSendReview],
+    corral_review_changes: ['Corral: review the latest agent changes', co.corralReviewChanges],
+    corral_next_change: ['Corral: next recorded change', co.corralNextChange],
+    corral_prev_change: ['Corral: previous recorded change', co.corralPrevChange],
+    corral_popup: ['Corral: run a command in a popup', co.corralPopup],
+    corral_focus_last_pane: ['Corral: previously active pane', co.corralFocusLastPane],
+    corral_new_worktree: ['Corral: new agent worktree', co.corralNewWorktree],
 
     // ---- view / window / space ----
     align_view_center: ['Align view center', vw.alignViewCenter],

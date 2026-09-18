@@ -75,7 +75,7 @@ Legend: ✅ Helix semantics, 🟡 delegated to a VS Code feature (close but not 
 | `:echo` / `:noop` | | ✅ | |
 | `:workspace-trust` / `-untrust` / `-exclude` | | 🟡 | opens the trust editor |
 
-Helicode-specific additions: `:vscode-command` / `:vsc <command.id> [json args]` (run any VS Code command, e.g. `:vsc corral.splitRight`; bindable through `helicode.keys`), `:popup` / `:pop <command>` (run the command in a [Corral](https://github.com/s-tatsuya/corral) popup terminal, interactive and floating, then replace the selection / insert at the cursor with its output; `:popup!` only runs it), `:helicode-toggle`, `:keymap` (opens the keymap
+Helicode-specific additions: `:vscode-command` / `:vsc <command.id> [json args]` (run any VS Code command, e.g. `:vsc corral.splitRight`; bindable through `helicode.keys`), `:corral <command> [args]` (Corral CLI from the editor: `:corral panes`, `:corral review`, `:corral send claude "run tests"`), `:popup` / `:pop <command>` (run the command in a [Corral](https://github.com/s-tatsuya/corral) popup terminal, interactive and floating, then replace the selection / insert at the cursor with its output; `:popup!` only runs it), `:helicode-toggle`, `:keymap` (opens the keymap
 reference), `:tree-sitter-grammars`, `:markdown-preview` (`:preview`).
 
 ## Option mapping for `:set` / `:toggle` / `:get`

@@ -11,6 +11,7 @@ import { from, to, fragment, primary, cursor as rangeCursor, selection as mkSele
 import { gotoLineWithoutJumplist } from '../engine/commands/movement';
 import { pasteImpl } from '../engine/commands/changes';
 import { shellImpl, ShellBehavior, runShell, insertOutputAtSelections } from '../engine/commands/shell';
+import { corralCli } from '../engine/commands/corral';
 import { getSyntax, showLog, bundledGrammars, supportsLanguage } from '../treesitter';
 import { vsCommand, vsCommandAndSync, exitSelectMode } from '../engine/commands/util';
 import { Change } from '../core/changes';
@@ -458,6 +459,7 @@ def('run-shell-command', ['sh', '!'], 'Run a shell command', async (cx, _a, _b, 
   if (where === 'below') await vsCommand('workbench.action.newGroupBelow');
   await vscode.window.showTextDocument(doc, { preview: true, viewColumn: where === 'beside' ? vscode.ViewColumn.Beside : vscode.ViewColumn.Active, preserveFocus: where === 'beside' });
 });
+def('corral', [], 'Run a Corral CLI command from the editor: `:corral panes`, `:corral review`, `:corral send claude <text>`, `:corral ask <q> [opts]` ... (needs Corral).', (cx, args) => corralCli(cx, args));
 def(
   'popup',
   ['pop'],

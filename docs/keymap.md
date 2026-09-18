@@ -196,6 +196,8 @@ Textobjects after `mi` / `ma`:
 | `'` | `last_picker` | ✅ | |
 | `G ...` | debug (sticky) | 🟡 | mapped to VS Code debug commands (`l` start, `c` continue, `n` step over, `i`/`o` step in/out, `b` breakpoint, `t` stop, `h` pause, `r` restart, `v` variables, `Ctrl-c`/`Ctrl-l` edit breakpoint/logpoint) |
 | `w ...` | window mode | ✅ | same as `Ctrl-w` |
+
+Window mode also carries Corral keys (no-ops unless the Corral extension is installed): `c` new terminal, `S`/`V` split with a shell, `a` jump to agent, `A` spawn agent, `i` prompt agent, `e` ask agent about selection, `m` review comment here, `D` send review, `d` review changes, `]`/`[` next/previous change, `P` popup, `;` last pane, `W` new agent worktree.
 | `y` / `Y` / `p` / `P` / `R` | clipboard yank/paste/replace | ✅ | |
 | `/` | `global_search` | 🟡 | Search view seeded with the selection |
 | `k` | `hover` | 🟡 (LSP) | |

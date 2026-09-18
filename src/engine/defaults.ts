@@ -27,6 +27,22 @@ const windowMode: KeyTrieSpec = {
     'C-s | s': 'hsplit_new',
     'C-v | v': 'vsplit_new',
   },
+  // Corral pane/agent keys (same letters as Corral's prefix table); no-ops without Corral
+  c: 'corral_new_terminal',
+  S: 'corral_split_down',
+  V: 'corral_split_right',
+  a: 'corral_pick_agent',
+  A: 'corral_spawn_agent',
+  i: 'corral_prompt_agent',
+  e: 'corral_ask_agent',
+  m: 'corral_comment_here',
+  D: 'corral_send_review',
+  d: 'corral_review_changes',
+  ']': 'corral_next_change',
+  '[': 'corral_prev_change',
+  P: 'corral_popup',
+  ';': 'corral_focus_last_pane',
+  W: 'corral_new_worktree',
 };
 
 const viewMode: KeyTrieSpec = {
