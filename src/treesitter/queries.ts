@@ -1,24 +1,19 @@
 /**
  * Loads Helix textobject queries (queries/<lang>/textobjects.scm) honouring
- * the `; inherits: a,b` directive used by Helix's runtime queries.
+ * the `; inherits: a,b` directive used by Helix's runtime queries. Uses the
+ * VS Code file system API so it also works in the web extension host.
  */
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+import * as vscode from 'vscode';
 
 const INHERITS_RE = /^;+\s*inherits\s*:?\s*([a-z_,()-]+)\s*$/im;
 
-export interface QuerySource {
-  language: string;
-  source: string;
-}
-
-export function readQueryFile(root: string, language: string, kind = 'textobjects', seen = new Set<string>()): string | undefined {
+export async function readQueryFile(root: vscode.Uri, language: string, kind = 'textobjects', seen = new Set<string>()): Promise<string | undefined> {
   if (seen.has(language)) return '';
   seen.add(language);
-  const file = path.join(root, language, `${kind}.scm`);
+  const file = vscode.Uri.joinPath(root, language, `${kind}.scm`);
   let src: string;
   try {
-    src = fs.readFileSync(file, 'utf8');
+    src = new TextDecoder().decode(await vscode.workspace.fs.readFile(file));
   } catch {
     return undefined;
   }
@@ -30,7 +25,7 @@ export function readQueryFile(root: string, language: string, kind = 'textobject
     .filter(Boolean);
   let out = src.replace(INHERITS_RE, '');
   for (const p of parents) {
-    const parent = readQueryFile(root, p, kind, seen);
+    const parent = await readQueryFile(root, p, kind, seen);
     if (parent) out = parent + '\n' + out;
   }
   return out;

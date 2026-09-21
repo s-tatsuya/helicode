@@ -22,7 +22,20 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
-      - run: npm run build:prod
+      - name: Build (node + web bundles, grammars)
+        run: npm run build:prod
+        env:
+          HELICODE_REQUIRE_GRAMMARS: '1'
+      - name: Smoke test the web bundle
+        run: npm run check-web
+      - name: Check tree-sitter queries
+        if: runner.os == 'Linux'
+        run: npm run check-queries
+      - name: Verify the keybindings are up to date
+        if: runner.os == 'Linux'
+        run: |
+          npm run gen-keybindings
+          git diff --exit-code package.json
       - run: npx vsce package --no-dependencies
       - name: Integration tests (Linux, headless)
         if: runner.os == 'Linux'

@@ -24,7 +24,7 @@ Legend: ✅ Helix semantics, 🟡 delegated to a VS Code feature (close but not 
 | `:format` | `:fmt` | 🟡 | `editor.action.formatDocument` |
 | `:indent-style` | | ✅ | `t` or 1-16 |
 | `:line-ending` | | ✅ | `lf` / `crlf` |
-| `:earlier` / `:later` | `:ear` / `:lat` | 🟡 | step counts only (no time spans) |
+| `:earlier` / `:later` | `:ear` / `:lat` | ✅ | step counts and time spans (`:earlier 10s`, `:later 1m30s`) with `helicode.undo: helix` |
 | `:write-quit` | `:wq`, `:x`, `:xit`, `:exit` | ✅ | |
 | `:write-quit!` | `:wq!`, `:x!` | ✅ | |
 | `:write-all` / `!` | `:wa` | ✅ | |
@@ -48,25 +48,28 @@ Legend: ✅ Helix semantics, 🟡 delegated to a VS Code feature (close but not 
 | `:lsp-restart` | | 🟡 | best-effort per language (TS, rust-analyzer, Python, Go, ...) |
 | `:lsp-stop` | | ❌ | VS Code manages servers |
 | `:tree-sitter-scopes` | | ✅ | node type chain at the cursor (bundled grammars) |
+| `:registers` | `:reg` | ✅ | contents of every register, in a scratch buffer |
 | `:tree-sitter-highlight-name` | | 🟡 | `Developer: Inspect Editor Tokens and Scopes` |
 | `:tree-sitter-layers` | | 🟡 | reports the grammar in use (no injections) |
 | `:tree-sitter-subtree` | `:ts-subtree` | ✅ | opens the S-expression beside |
 | `:debug-start` / `:debug-remote` / `:debug-eval` | `:dbg` | 🟡 | VS Code debug commands |
 | `:vsplit` / `:hsplit` | `:vs` / `:hs`, `:sp` | ✅ | optional files |
 | `:vsplit-new` / `:hsplit-new` | `:vnew` / `:hnew` | ✅ | |
-| `:tutor` | | ✅ | opens the Helix tutor text |
+| `:tutor` | | ✅ | opens the tutor; `:tutor ja` picks a language, otherwise the VS Code display language |
 | `:goto` | `:g` | ✅ | also `:<n>` |
 | `:set-language` | `:lang` | ✅ | language completion |
 | `:set-option` / `:toggle-option` / `:get-option` | `:set` / `:toggle` / `:get` | 🟡 | Helix option names are mapped to VS Code / Helicode settings (see below); unknown `a.b` names are treated as VS Code settings |
 | `:sort` | | ✅ | `--reverse`/`-r`, `--insensitive`/`-i`, `:sort!`; also `:rsort` |
 | `:reflow` | | ✅ | width argument or `helicode.textWidth`, keeps comment prefixes |
 | `:config-reload` | | ✅ | re-applies `helicode.keys` |
+| `:config-import` | `:import-helix-config` | ✅ | reads a Helix `config.toml` and applies `[keys.*]` and the supported `[editor]` options; `!` writes to the workspace settings |
 | `:config-open` / `:config-open-workspace` | | 🟡 | settings.json files |
 | `:log-open` | | ✅ | Helicode output channel |
 | `:insert-output` / `:append-output` | | ✅ | |
 | `:pipe` / `:pipe-to` | `:\|` | ✅ | |
 | `:run-shell-command` | `:sh`, `:!` | ✅ | output opens in a scratch editor |
 | `:reset-diff-change` | `:diffget`, `:diffg` | 🟡 | `git.revertSelectedRanges` |
+| `:select-register` | | ✅ | pick the register for the next yank/paste from a list |
 | `:clear-register` / `:set-register` | | ✅ | |
 | `:redraw` | | ✅ | |
 | `:move` / `:move!` | `:mv` | ✅ | renames the file (workspace edit) |
@@ -75,8 +78,18 @@ Legend: ✅ Helix semantics, 🟡 delegated to a VS Code feature (close but not 
 | `:echo` / `:noop` | | ✅ | |
 | `:workspace-trust` / `-untrust` / `-exclude` | | 🟡 | opens the trust editor |
 
+### Tree-sitter grammars
+
+| Command | Aliases | Notes |
+| --- | --- | --- |
+| `:tree-sitter-grammars` | | lists bundled, installed and installable grammars |
+| `:tree-sitter-install` | `:ts-install` | downloads an optional grammar (checksum verified) into the extension's storage; with no argument, the grammar for the current language |
+| `:tree-sitter-uninstall` | `:ts-uninstall` | removes a grammar installed that way |
+
 Helicode-specific additions: `:vscode-command` / `:vsc <command.id> [json args]` (run any VS Code command, e.g. `:vsc corral.splitRight`; bindable through `helicode.keys`), `:corral <command> [args]` (Corral CLI from the editor: `:corral panes`, `:corral review`, `:corral send claude "run tests"`), `:popup` / `:pop <command>` (run the command in a [Corral](https://github.com/s-tatsuya/corral) popup terminal, interactive and floating, then replace the selection / insert at the cursor with its output; `:popup!` only runs it), `:helicode-toggle`, `:keymap` (opens the keymap
-reference), `:tree-sitter-grammars`, `:markdown-preview` (`:preview`).
+reference), `:markdown-preview` (`:preview`), `:registers`, `:config-import`,
+`:tree-sitter-install`. `:tutor` takes a language (`:tutor ja`) and otherwise
+follows the VS Code display language.
 
 ## Option mapping for `:set` / `:toggle` / `:get`
 
@@ -99,5 +112,13 @@ reference), `:tree-sitter-grammars`, `:markdown-preview` (`:preview`).
 | `bufferline` | `workbench.editor.showTabs` |
 | `insert-final-newline` / `trim-trailing-whitespace` / `trim-final-newlines` | `files.*` |
 | `lsp.display-inlay-hints` | `editor.inlayHints.enabled` |
+| `auto-info` | `helicode.autoInfo` |
+| `undo` (`helix`/`vscode`) | `helicode.undo` |
 
 Example: `:toggle line-number relative absolute`, `:set soft-wrap.enable true`.
+
+## Prompts
+
+Every prompt (`:`, `/`, `?`, `s`, `S`, `K`, shell commands) is a VS Code
+QuickPick with history and completion. `Ctrl-r` followed by a register name
+inserts that register's content, like Helix.

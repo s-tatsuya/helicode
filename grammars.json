@@ -1,0 +1,124 @@
+{
+  "$comment": "Prebuilt tree-sitter grammar WASM files fetched by scripts/fetch-grammars.mjs. `bundled` grammars ship in the .vsix; the others can be installed on demand with :tree-sitter-install <name> (they are several MB each).",
+  "grammars": {
+    "html": {
+      "url": "https://github.com/tree-sitter/tree-sitter-html/releases/download/v0.23.2/tree-sitter-html.wasm",
+      "sha256": "c48fcd82c7ea8bf943180088ba7f28c48b2bb5287874179168bf9d31e394cf85",
+      "bundled": true,
+      "license": "MIT",
+      "source": "tree-sitter/tree-sitter-html v0.23.2"
+    },
+    "json": {
+      "url": "https://github.com/tree-sitter/tree-sitter-json/releases/download/v0.24.8/tree-sitter-json.wasm",
+      "sha256": "d2119fb98d5912719b13f9458574f8608d2d29dfbe45f6be1f860ea1fe2a2405",
+      "bundled": true,
+      "license": "MIT",
+      "source": "tree-sitter/tree-sitter-json v0.24.8"
+    },
+    "yaml": {
+      "url": "https://github.com/tree-sitter-grammars/tree-sitter-yaml/releases/download/v0.7.2/tree-sitter-yaml.wasm",
+      "sha256": "0a0e5ebcfeb0b2bf272d071396eeed107b2c4b2617b69d5959b13f78b357a4d6",
+      "bundled": true,
+      "license": "MIT",
+      "source": "tree-sitter-grammars/tree-sitter-yaml v0.7.2"
+    },
+    "toml": {
+      "url": "https://github.com/tree-sitter-grammars/tree-sitter-toml/releases/download/v0.7.0/tree-sitter-toml.wasm",
+      "sha256": "1ac6a83826c35a68857f8325e00c78f6bcbef4eb6db3931a6cf3041f76e5e09f",
+      "bundled": true,
+      "license": "MIT",
+      "source": "tree-sitter-grammars/tree-sitter-toml v0.7.0"
+    },
+    "lua": {
+      "url": "https://github.com/tree-sitter-grammars/tree-sitter-lua/releases/download/v0.5.0/tree-sitter-lua.wasm",
+      "sha256": "df08a1704e504c70b8dba4a3e6f8e0c99a4fb94e1b1693d2969f53141d09f0d4",
+      "bundled": true,
+      "license": "MIT",
+      "source": "tree-sitter-grammars/tree-sitter-lua v0.5.0"
+    },
+    "markdown": {
+      "url": "https://github.com/tree-sitter-grammars/tree-sitter-markdown/releases/download/v0.5.3/tree-sitter-markdown.wasm",
+      "sha256": "dd9fc12ac2804d7c7da787e4774125b32e4fb3c244e5e7031a77cb7dd8036020",
+      "bundled": true,
+      "license": "MIT",
+      "source": "tree-sitter-grammars/tree-sitter-markdown v0.5.3"
+    },
+    "zig": {
+      "url": "https://github.com/tree-sitter-grammars/tree-sitter-zig/releases/download/v1.1.2/tree-sitter-zig.wasm",
+      "sha256": "54b3b83dd9c62da5815f06132bc3fc914d9dcc780370b32416446a0b7969e8c6",
+      "bundled": true,
+      "license": "MIT",
+      "source": "tree-sitter-grammars/tree-sitter-zig v1.1.2"
+    },
+    "elixir": {
+      "url": "https://github.com/elixir-lang/tree-sitter-elixir/releases/download/v0.3.5/tree-sitter-elixir.wasm",
+      "sha256": "1818ae0d7343f880abb0b7932c9a815f09896ca67b3e126096a2dd7677d1477b",
+      "bundled": true,
+      "license": "Apache-2.0",
+      "source": "elixir-lang/tree-sitter-elixir v0.3.5"
+    },
+    "c": {
+      "url": "https://github.com/tree-sitter/tree-sitter-c/releases/download/v0.24.2/tree-sitter-c.wasm",
+      "sha256": "83e8d7902b9d7f8c7c5cd4bd9acb5c7eb5faf42c09f85546b183964d3b5f48f9",
+      "bundled": true,
+      "license": "MIT",
+      "source": "tree-sitter/tree-sitter-c v0.24.2"
+    },
+    "xml": {
+      "url": "https://github.com/tree-sitter-grammars/tree-sitter-xml/releases/download/v0.7.0/tree-sitter-xml.wasm",
+      "sha256": "9950327f8542a3d563fe4192aa05986a53e6fd6adca518cbb1a1699cbc8970ad",
+      "bundled": true,
+      "license": "MIT",
+      "source": "tree-sitter-grammars/tree-sitter-xml v0.7.0"
+    },
+    "make": {
+      "url": "https://github.com/tree-sitter-grammars/tree-sitter-make/releases/download/v1.1.1/tree-sitter-make.wasm",
+      "sha256": "1254d1e5787be8bb944d55d1f6552b6b2b7908272ed498013bfdc07bd7d042dd",
+      "bundled": true,
+      "license": "MIT",
+      "source": "tree-sitter-grammars/tree-sitter-make v1.1.1"
+    },
+    "hcl": {
+      "url": "https://github.com/tree-sitter-grammars/tree-sitter-hcl/releases/download/v1.2.0/tree-sitter-hcl.wasm",
+      "sha256": "2f9acf63e7c263215f283e2cf0f4ebbb9bfa77f58e18fa42b91094be201372a7",
+      "bundled": true,
+      "license": "Apache-2.0",
+      "source": "tree-sitter-grammars/tree-sitter-hcl v1.2.0"
+    },
+    "kotlin": {
+      "url": "https://github.com/fwcd/tree-sitter-kotlin/releases/download/0.3.8/tree-sitter-kotlin.wasm",
+      "sha256": "c624e7443b371c28adc5d81674e73067564c12555ebe3ed96a6c8db814b7602d",
+      "bundled": false,
+      "license": "MIT",
+      "source": "fwcd/tree-sitter-kotlin 0.3.8"
+    },
+    "swift": {
+      "url": "https://github.com/alex-pinkus/tree-sitter-swift/releases/download/0.7.3/tree-sitter-swift.wasm",
+      "sha256": "0258a7ef17303a8079ffe0748b3583d59656b5c3e8653fca7b6451b3e6689eb2",
+      "bundled": false,
+      "license": "MIT",
+      "source": "alex-pinkus/tree-sitter-swift 0.7.3"
+    },
+    "scala": {
+      "url": "https://github.com/tree-sitter/tree-sitter-scala/releases/download/v0.26.2/tree-sitter-scala.wasm",
+      "sha256": "37d7fe5a91ca98941dc05493b0c05a0df0f36df5035890fa00b02497c68aaac3",
+      "bundled": false,
+      "license": "MIT",
+      "source": "tree-sitter/tree-sitter-scala v0.26.2"
+    },
+    "ocaml": {
+      "url": "https://github.com/tree-sitter/tree-sitter-ocaml/releases/download/v0.26.0/tree-sitter-ocaml.wasm",
+      "sha256": "bfa3eef92b9d3cc1117aa486d46ecb06c98a3a28c1747660aaa5851df5e4530c",
+      "bundled": false,
+      "license": "MIT",
+      "source": "tree-sitter/tree-sitter-ocaml v0.26.0"
+    },
+    "haskell": {
+      "url": "https://github.com/tree-sitter/tree-sitter-haskell/releases/download/v0.23.1/tree-sitter-haskell.wasm",
+      "sha256": "37a6b07b1a838d02ffb4f4c2a06863637a8efe48432d60a275f50f1d08f1092c",
+      "bundled": false,
+      "license": "MIT",
+      "source": "tree-sitter/tree-sitter-haskell v0.23.1"
+    }
+  }
+}

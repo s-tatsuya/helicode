@@ -12,6 +12,8 @@ import { defaultKeymaps } from './defaults';
 import { EditorState } from './editor-state';
 import { CommandContext, CommandFn, CommandInfo, Mode } from './types';
 import { docFor } from '../vscode/document';
+import { HistoryManager, UndoMode } from './history';
+import { trace } from '../platform';
 
 export interface Jump {
   uri: vscode.Uri;
@@ -73,6 +75,17 @@ export interface EngineConfig {
   shell: string[];
   notebookEscapeQuitsEdit: boolean;
   defaultYankRegister: string;
+  /** `helix`: Helix-style history (one revision per command / insert session); `vscode`: host undo stack. */
+  undoMode: UndoMode;
+  /** Show the which-key style infobox for minor modes and key prompts. */
+  autoInfo: boolean;
+  /** Delay before the infobox appears (ms). */
+  autoInfoDelay: number;
+}
+
+export interface KeyEntry {
+  key: string;
+  value: string;
 }
 
 export type StatusRenderer = (engine: Engine) => void;
@@ -83,6 +96,7 @@ export class Engine {
   readonly registers: Registers;
   readonly commands = new Map<string, CommandInfo>();
   readonly jumplist = new JumpList();
+  readonly history = new HistoryManager();
   config: EngineConfig;
 
   // dispatcher state
@@ -98,6 +112,8 @@ export class Engine {
   private runningCommand: Promise<void> | undefined;
   /** Command name currently awaiting keys (for the status line hint). */
   private nextKeyHint: string | undefined;
+  /** Key choices offered by the command awaiting a key (infobox). */
+  private nextKeyEntries: KeyEntry[] | undefined;
 
   // macros
   macroRecording: { register: string; keys: Key[] } | undefined;
@@ -142,6 +158,7 @@ export class Engine {
       },
     });
     this.applyKeymapOverrides();
+    this.history.mode = config.undoMode;
   }
 
   applyKeymapOverrides(): void {
@@ -234,10 +251,25 @@ export class Engine {
       return;
     }
     if (name.startsWith(':')) {
-      if (this.runTyped) await this.runTyped(name.slice(1), cx);
+      this.beginTransaction(editor);
+      try {
+        if (this.runTyped) await this.runTyped(name.slice(1), cx);
+      } finally {
+        this.endTransaction();
+      }
       return;
     }
-    if (process.env.HELICODE_TRACE) console.log(`[helicode] execute ${name} mode=${this.mode}`);
+    if (name.startsWith('@')) {
+      // Helix keymap macro: "@" followed by keys, e.g. "@x<esc>ihello".
+      this.beginTransaction(editor);
+      try {
+        await this.replayKeys(this.parseKeys(name.slice(1)));
+      } finally {
+        this.endTransaction();
+      }
+      return;
+    }
+    if (trace) console.log(`[helicode] execute ${name} mode=${this.mode}`);
     const info = this.commands.get(name);
     if (!info) {
       this.setError(`unknown command: ${name}`);
@@ -245,16 +277,42 @@ export class Engine {
     }
     // Commands that enter insert mode are remembered for `.`
     const before = this.mode;
+    this.beginTransaction(editor);
     try {
       await info.fn(cx);
     } catch (e) {
       this.setError(`${name}: ${e instanceof Error ? e.message : String(e)}`);
       console.error('[helicode]', name, e);
+    } finally {
+      this.endTransaction();
     }
-    if (process.env.HELICODE_TRACE) console.log(`[helicode] done ${name} mode=${this.mode}`);
+    if (trace) console.log(`[helicode] done ${name} mode=${this.mode}`);
     if (before !== 'insert' && this.mode === 'insert') {
       this.currentInsert = { command: name, count: cx.count, register: cx.register, keys: [] };
     }
+  }
+
+  // -------------------------------------------------------------------
+  // History (undo grouping)
+  // -------------------------------------------------------------------
+
+  /** Group every document change made while a command runs into one revision. */
+  private beginTransaction(editor: EditorState): void {
+    this.history.track(editor.vs.document, editor.selection);
+    if (this.mode !== 'insert') this.history.noteSelection(editor.vs.document, editor.selection);
+    this.history.hold();
+  }
+
+  private endTransaction(): void {
+    this.history.release((uri) => this.selectionForHistory(uri));
+  }
+
+  /** Selection recorded as the "after" state of a revision for `uri`. */
+  selectionForHistory(uri: string): Selection | undefined {
+    const st = this.active();
+    if (!st || st.vs.document.uri.toString() !== uri) return undefined;
+    if (this.mode === 'insert') return st.fromVscode(st.vs.selections);
+    return st.selection;
   }
 
   // -------------------------------------------------------------------
@@ -273,12 +331,19 @@ export class Engine {
       }
     }
     this.mode = mode;
+    if (prev === 'insert') {
+      // One insert session = one revision.
+      this.history.insertOpen = false;
+      if (!this.history.holding) this.history.commitAll((uri) => this.selectionForHistory(uri));
+    }
+    if (mode === 'insert') this.history.insertOpen = true;
     if (st) st.refresh();
     this.render(this);
   }
 
   enterInsertMode(editor: EditorState, sel: Selection, restoreCursor = false): void {
     this.mode = 'insert';
+    this.history.insertOpen = true;
     editor.beginInsert(sel, restoreCursor);
     this.render(this);
   }
@@ -354,6 +419,7 @@ export class Engine {
       const cb = this.nextKeyCb;
       this.nextKeyCb = undefined;
       this.nextKeyHint = undefined;
+      this.nextKeyEntries = undefined;
       await this.untilDoneOrWaiting(async () => {
         try {
           await cb(key);
@@ -392,7 +458,12 @@ export class Engine {
 
     // `.` repeats the last insert.
     if (ch === '.' && !this.pendingNode && !this.sticky) {
-      await this.repeatLastInsert(editor);
+      this.beginTransaction(editor);
+      try {
+        await this.repeatLastInsert(editor);
+      } finally {
+        this.endTransaction();
+      }
       this.afterKey(editor);
       return;
     }
@@ -526,16 +597,32 @@ export class Engine {
     return parts.join(' ');
   }
 
-  setNextKeyHint(hint: string): void {
+  setNextKeyHint(hint: string, entries?: KeyEntry[]): void {
     this.nextKeyHint = hint;
+    this.nextKeyEntries = entries;
     this.render(this);
   }
 
-  /** Entries of the current minor mode (which-key style hint). */
-  pendingEntries(): { key: string; value: string }[] | undefined {
+  /** Entries of the current minor mode or key prompt (which-key style infobox). */
+  pendingEntries(): KeyEntry[] | undefined {
+    if (this.nextKeyCb) return this.nextKeyEntries;
     const node = this.pendingNode ?? this.sticky;
     if (!node) return undefined;
     return node.entries().map((e) => ({ key: e.key, value: typeof e.value === 'string' ? e.value : `+${e.value.name}` }));
+  }
+
+  /** Title for the infobox: the pending keys and the minor mode name, or the prompt hint. */
+  pendingTitle(): string | undefined {
+    if (this.nextKeyCb) return this.nextKeyHint;
+    const node = this.pendingNode ?? this.sticky;
+    if (!node) return undefined;
+    const keys = this.pendingKeys.map(formatKey).join(' ');
+    return keys ? `${keys}  ${node.name ?? ''}`.trim() : (node.name ?? '');
+  }
+
+  /** True while a non-sticky minor mode or a key prompt waits for input. */
+  get infoboxPending(): boolean {
+    return !!(this.pendingNode || this.nextKeyCb);
   }
 
   cancelPending(): void {
@@ -543,6 +630,7 @@ export class Engine {
     this.pendingKeys = [];
     this.nextKeyCb = undefined;
     this.nextKeyHint = undefined;
+    this.nextKeyEntries = undefined;
     this.count = undefined;
     this.selectedRegister = undefined;
     this.render(this);

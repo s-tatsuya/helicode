@@ -7,3 +7,4 @@ wasm/
 result
 .DS_Store
 .vscode-test/
+wasm-optional/

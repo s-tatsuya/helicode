@@ -7,26 +7,29 @@
  * - Trees are parsed lazily per document and updated incrementally.
  */
 import * as vscode from 'vscode';
-import * as path from 'node:path';
-import * as fs from 'node:fs';
 import type { Parser as ParserT, Language as LanguageT, Tree, Node, Query, Edit } from 'web-tree-sitter';
 import { readQueryFile } from './queries';
 import { SyntaxMatcher } from '../core/surround';
 import { PAIRS, findMatchingBracketPlaintext } from '../core/brackets';
 import { Direction } from '../core/range';
+import { basename } from '../core/paths';
+import { trace } from '../platform';
+import languagesJson from './languages.json';
+import grammarsJson from '../../grammars.json';
 
 type WTS = typeof import('web-tree-sitter');
 
 let wts: WTS | undefined;
 let initPromise: Promise<void> | undefined;
-let extensionRoot = '';
+let extensionUri: vscode.Uri | undefined;
+let storageUri: vscode.Uri | undefined;
 const languages = new Map<string, Promise<LanguageT | undefined>>();
-const queries = new Map<string, Query | null>();
+const queries = new Map<string, Promise<Query | undefined>>();
 const output = vscode.window.createOutputChannel('Helicode');
 
 export function log(msg: string): void {
   output.appendLine(`[${new Date().toISOString()}] ${msg}`);
-  if (process.env.HELICODE_TRACE) console.log('[helicode:ts]', msg);
+  if (trace) console.log('[helicode:ts]', msg);
 }
 
 export function showLog(): void {
@@ -34,27 +37,18 @@ export function showLog(): void {
 }
 
 /** VS Code languageId -> [grammar file name, helix query language name]. */
-const LANGUAGE_MAP: Record<string, [string, string]> = {
-  typescript: ['typescript', 'typescript'],
-  typescriptreact: ['tsx', 'tsx'],
-  javascript: ['javascript', 'javascript'],
-  javascriptreact: ['javascript', 'jsx'],
-  python: ['python', 'python'],
-  rust: ['rust', 'rust'],
-  go: ['go', 'go'],
-  java: ['java', 'java'],
-  c: ['cpp', 'c'],
-  cpp: ['cpp', 'cpp'],
-  csharp: ['c-sharp', 'c-sharp'],
-  css: ['css', 'css'],
-  scss: ['css', 'css'],
-  php: ['php', 'php'],
-  ruby: ['ruby', 'ruby'],
-  shellscript: ['bash', 'bash'],
-  ini: ['ini', 'ini'],
-  powershell: ['powershell', 'powershell'],
-  regex: ['regex', 'regex'],
-};
+const LANGUAGE_MAP: Record<string, [string, string]> = Object.fromEntries(Object.entries(languagesJson).filter(([k]) => !k.startsWith('$'))) as Record<string, [string, string]>;
+
+export interface GrammarInfo {
+  url: string;
+  sha256: string;
+  bundled: boolean;
+  license: string;
+  source: string;
+}
+
+/** Grammars known to the manifest (bundled or installable on demand). */
+export const GRAMMARS: Record<string, GrammarInfo> = grammarsJson.grammars as Record<string, GrammarInfo>;
 
 function extraGrammars(): Record<string, { wasm: string; queries?: string; language?: string }> {
   return vscode.workspace.getConfiguration('helicode').get('treeSitter.extraGrammars', {}) ?? {};
@@ -64,14 +58,23 @@ export function isEnabled(): boolean {
   return vscode.workspace.getConfiguration('helicode').get<boolean>('treeSitter.enabled', true);
 }
 
-export function init(root: string): Promise<void> {
-  extensionRoot = root;
+async function exists(uri: vscode.Uri): Promise<boolean> {
+  try {
+    await vscode.workspace.fs.stat(uri);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function init(extUri: vscode.Uri, globalStorage: vscode.Uri): Promise<void> {
+  extensionUri = extUri;
+  storageUri = globalStorage;
   if (!initPromise) {
     initPromise = (async () => {
       const mod = (await import('web-tree-sitter')) as unknown as WTS;
-      await mod.Parser.init({
-        locateFile: (f: string) => path.join(root, 'wasm', f),
-      });
+      const wasmBinary = await vscode.workspace.fs.readFile(vscode.Uri.joinPath(extUri, 'wasm', 'web-tree-sitter.wasm'));
+      await mod.Parser.init({ wasmBinary });
       wts = mod;
       log('tree-sitter runtime initialised');
     })().catch((e) => {
@@ -82,18 +85,49 @@ export function init(root: string): Promise<void> {
   return initPromise;
 }
 
-function grammarSpec(languageId: string): { wasm: string; queryLang: string; queryRoot: string } | undefined {
+/** Turn a user supplied path (settings) into a Uri. */
+function uriFromSetting(p: string): vscode.Uri {
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(p)) return vscode.Uri.parse(p);
+  return vscode.Uri.file(p);
+}
+
+function installedGrammarUri(name: string): vscode.Uri | undefined {
+  return storageUri ? vscode.Uri.joinPath(storageUri, 'grammars', `tree-sitter-${name}.wasm`) : undefined;
+}
+
+interface GrammarSpec {
+  /** Candidate locations, first existing one wins. */
+  wasm: vscode.Uri[];
+  queryLang: string;
+  queryRoot: vscode.Uri;
+  grammar: string;
+}
+
+function grammarSpec(languageId: string): GrammarSpec | undefined {
+  if (!extensionUri) return undefined;
   const extra = extraGrammars()[languageId];
+  const queriesRoot = vscode.Uri.joinPath(extensionUri, 'queries');
   if (extra) {
-    return { wasm: extra.wasm, queryLang: extra.language ?? languageId, queryRoot: extra.queries ?? path.join(extensionRoot, 'queries') };
+    return { wasm: [uriFromSetting(extra.wasm)], queryLang: extra.language ?? languageId, queryRoot: extra.queries ? uriFromSetting(extra.queries) : queriesRoot, grammar: languageId };
   }
   const m = LANGUAGE_MAP[languageId];
   if (!m) return undefined;
-  return { wasm: path.join(extensionRoot, 'wasm', `tree-sitter-${m[0]}.wasm`), queryLang: m[1], queryRoot: path.join(extensionRoot, 'queries') };
+  const candidates = [vscode.Uri.joinPath(extensionUri, 'wasm', `tree-sitter-${m[0]}.wasm`)];
+  const installed = installedGrammarUri(m[0]);
+  if (installed) candidates.push(installed);
+  return { wasm: candidates, queryLang: m[1], queryRoot: queriesRoot, grammar: m[0] };
 }
 
 export function supportsLanguage(languageId: string): boolean {
   return grammarSpec(languageId) !== undefined;
+}
+
+/** Grammar name (manifest key) for a language id, if it is installable on demand. */
+export function installableGrammarFor(languageId: string): string | undefined {
+  const m = LANGUAGE_MAP[languageId];
+  if (!m) return undefined;
+  const g = GRAMMARS[m[0]];
+  return g && !g.bundled ? m[0] : undefined;
 }
 
 async function loadLanguage(languageId: string): Promise<LanguageT | undefined> {
@@ -102,13 +136,21 @@ async function loadLanguage(languageId: string): Promise<LanguageT | undefined> 
   let p = languages.get(languageId);
   if (!p) {
     p = (async () => {
-      try {
-        if (!fs.existsSync(spec.wasm)) {
-          log(`grammar not found for ${languageId}: ${spec.wasm}`);
-          return undefined;
+      let file: vscode.Uri | undefined;
+      for (const c of spec.wasm) {
+        if (await exists(c)) {
+          file = c;
+          break;
         }
-        const lang = await wts!.Language.load(spec.wasm);
-        log(`loaded grammar for ${languageId} (${path.basename(spec.wasm)}, abi ${lang.abiVersion})`);
+      }
+      if (!file) {
+        log(`grammar not found for ${languageId}: ${spec.wasm.map((u) => u.fsPath).join(', ')}`);
+        return undefined;
+      }
+      try {
+        const bytes = await vscode.workspace.fs.readFile(file);
+        const lang = await wts!.Language.load(bytes);
+        log(`loaded grammar for ${languageId} (${basename(file.path)}, abi ${lang.abiVersion})`);
         return lang;
       } catch (e) {
         log(`failed to load grammar for ${languageId}: ${e}`);
@@ -120,33 +162,43 @@ async function loadLanguage(languageId: string): Promise<LanguageT | undefined> 
   return p;
 }
 
-function textobjectQuery(languageId: string, lang: LanguageT): Query | undefined {
-  const cached = queries.get(languageId);
-  if (cached !== undefined) return cached ?? undefined;
-  const spec = grammarSpec(languageId);
-  if (!spec || !wts) return undefined;
-  const src = readQueryFile(spec.queryRoot, spec.queryLang, 'textobjects');
-  if (!src) {
-    queries.set(languageId, null);
-    log(`no textobjects query for ${languageId} (${spec.queryLang})`);
-    return undefined;
+/** Forget a cached (missing) grammar so the next use retries, e.g. after :tree-sitter-install. */
+export function resetLanguage(languageId?: string): void {
+  if (languageId) {
+    languages.delete(languageId);
+    queries.delete(languageId);
+    return;
   }
-  try {
-    const q = new wts.Query(lang, src);
-    queries.set(languageId, q);
-    return q;
-  } catch (e) {
-    // Try to salvage by dropping patterns that reference unknown node types.
-    const salvaged = salvageQuery(lang, src, String(e));
-    if (salvaged) {
-      queries.set(languageId, salvaged);
-      log(`textobjects query for ${languageId} loaded with some patterns dropped (${String(e).split('\n')[0]})`);
-      return salvaged;
+  languages.clear();
+  queries.clear();
+}
+
+function textobjectQuery(languageId: string, lang: LanguageT): Promise<Query | undefined> {
+  let cached = queries.get(languageId);
+  if (cached) return cached;
+  cached = (async () => {
+    const spec = grammarSpec(languageId);
+    if (!spec || !wts) return undefined;
+    const src = await readQueryFile(spec.queryRoot, spec.queryLang, 'textobjects');
+    if (!src) {
+      log(`no textobjects query for ${languageId} (${spec.queryLang})`);
+      return undefined;
     }
-    log(`textobjects query for ${languageId} failed to compile: ${e}`);
-    queries.set(languageId, null);
-    return undefined;
-  }
+    try {
+      return new wts.Query(lang, src);
+    } catch (e) {
+      // Try to salvage by dropping patterns that reference unknown node types.
+      const salvaged = salvageQuery(lang, src, String(e));
+      if (salvaged) {
+        log(`textobjects query for ${languageId} loaded with some patterns dropped (${String(e).split('\n')[0]})`);
+        return salvaged;
+      }
+      log(`textobjects query for ${languageId} failed to compile: ${e}`);
+      return undefined;
+    }
+  })();
+  queries.set(languageId, cached);
+  return cached;
 }
 
 /** Compile each top-level pattern separately and keep the ones that work. */
@@ -574,7 +626,7 @@ export async function getSyntax(document: vscode.TextDocument): Promise<Syntax |
     }
     dt = { parser, tree, version: document.version, pendingEdits: [], languageId: document.languageId };
     trees.set(key, dt);
-    log(`parsed ${path.basename(document.fileName)} in ${Date.now() - t0}ms`);
+    log(`parsed ${basename(document.fileName)} in ${Date.now() - t0}ms`);
   } else if (dt.version !== document.version) {
     const t0 = Date.now();
     const newTree = dt.parser.parse(text, dt.tree);
@@ -584,21 +636,78 @@ export async function getSyntax(document: vscode.TextDocument): Promise<Syntax |
     }
     dt.version = document.version;
     const ms = Date.now() - t0;
-    if (ms > 50) log(`re-parsed ${path.basename(document.fileName)} in ${ms}ms`);
+    if (ms > 50) log(`re-parsed ${basename(document.fileName)} in ${ms}ms`);
   }
-  return new Syntax(dt.tree, textobjectQuery(document.languageId, lang), text, document.languageId);
+  return new Syntax(dt.tree, await textobjectQuery(document.languageId, lang), text, document.languageId);
 }
 
-export function bundledGrammars(): string[] {
-  const dir = path.join(extensionRoot, 'wasm');
+export async function bundledGrammars(): Promise<string[]> {
+  if (!extensionUri) return [];
   try {
-    return fs
-      .readdirSync(dir)
+    const entries = await vscode.workspace.fs.readDirectory(vscode.Uri.joinPath(extensionUri, 'wasm'));
+    return entries
+      .map(([f]) => f)
       .filter((f) => f.startsWith('tree-sitter-') && f.endsWith('.wasm'))
-      .map((f) => f.slice('tree-sitter-'.length, -'.wasm'.length));
+      .map((f) => f.slice('tree-sitter-'.length, -'.wasm'.length))
+      .sort();
   } catch {
     return [];
   }
+}
+
+export async function installedGrammars(): Promise<string[]> {
+  if (!storageUri) return [];
+  try {
+    const entries = await vscode.workspace.fs.readDirectory(vscode.Uri.joinPath(storageUri, 'grammars'));
+    return entries
+      .map(([f]) => f)
+      .filter((f) => f.startsWith('tree-sitter-') && f.endsWith('.wasm'))
+      .map((f) => f.slice('tree-sitter-'.length, -'.wasm'.length))
+      .sort();
+  } catch {
+    return [];
+  }
+}
+
+/** Grammars from the manifest that are not bundled (installable with :tree-sitter-install). */
+export function optionalGrammars(): string[] {
+  return Object.entries(GRAMMARS)
+    .filter(([, g]) => !g.bundled)
+    .map(([n]) => n)
+    .sort();
+}
+
+async function sha256Hex(bytes: Uint8Array): Promise<string> {
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes.slice().buffer);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Download a grammar from the manifest into the extension's global storage
+ * (verifying its checksum) and make it available immediately.
+ */
+export async function installGrammar(name: string, progress?: (msg: string) => void): Promise<void> {
+  const g = GRAMMARS[name];
+  if (!g) throw new Error(`unknown grammar: ${name} (known: ${Object.keys(GRAMMARS).sort().join(', ')})`);
+  const target = installedGrammarUri(name);
+  if (!target) throw new Error('global storage is not available');
+  progress?.(`downloading ${name} grammar...`);
+  const res = await fetch(g.url, { redirect: 'follow' });
+  if (!res.ok) throw new Error(`download failed: HTTP ${res.status}`);
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  const hash = await sha256Hex(bytes);
+  if (g.sha256 && hash !== g.sha256) throw new Error(`checksum mismatch for ${name}: expected ${g.sha256}, got ${hash}`);
+  await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(target, '..'));
+  await vscode.workspace.fs.writeFile(target, bytes);
+  for (const [id, [grammar]] of Object.entries(LANGUAGE_MAP)) if (grammar === name) resetLanguage(id);
+  log(`installed grammar ${name} (${(bytes.length / 1024).toFixed(0)} KB) to ${target.fsPath}`);
+}
+
+export async function uninstallGrammar(name: string): Promise<void> {
+  const target = installedGrammarUri(name);
+  if (!target) return;
+  await vscode.workspace.fs.delete(target);
+  for (const [id, [grammar]] of Object.entries(LANGUAGE_MAP)) if (grammar === name) resetLanguage(id);
 }
 
 export function dispose(): void {
@@ -607,7 +716,7 @@ export function dispose(): void {
     dt.parser.delete();
   }
   trees.clear();
-  for (const q of queries.values()) q?.delete();
+  for (const q of queries.values()) void q.then((x) => x?.delete());
   queries.clear();
   output.dispose();
 }

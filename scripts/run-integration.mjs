@@ -28,7 +28,9 @@ try {
   await runTests({
     extensionDevelopmentPath: root,
     extensionTestsPath: path.join(root, 'out/integration/index.js'),
-    launchArgs: ['--disable-extensions', '--disable-workspace-trust', '--user-data-dir', path.join(root, '.vscode-test/user-data')],
+    // The built-in extensions stay enabled so the git tests exercise the real
+    // `vscode.git` API; a private user-data-dir keeps user extensions out.
+    launchArgs: [root, '--disable-workspace-trust', '--skip-welcome', '--skip-release-notes', '--user-data-dir', path.join(root, '.vscode-test/user-data')],
     version: process.env.VSCODE_VERSION || 'stable',
     extensionTestsEnv: { HELICODE_TRACE: '1' },
   });

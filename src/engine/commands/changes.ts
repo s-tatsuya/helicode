@@ -3,6 +3,7 @@
  * indent, join, increment, newlines, undo/redo, macros.
  */
 import * as vscode from 'vscode';
+import { UndoKind } from '../../core/history';
 import { CommandContext, CommandFn } from '../types';
 import { Range, Selection, range as mkRange, point, from, to, direction, Direction, withDirection, lineRange, selection as mkSelection, transform, fragment, cursor as rangeCursor, cursorLine, primary } from '../../core/range';
 import { graphemes, lineEnd, lineEndWithEol, lineText, firstNonWhitespace, nextGraphemeBoundary, prevGraphemeBoundary, lineIsBlank } from '../../core/text';
@@ -10,6 +11,7 @@ import { Change, changeBySelection } from '../../core/changes';
 import { increment as incrementValue } from '../../core/increment';
 import { exitSelectMode, selectedLines, selectionIsLinewise, indentUnit, tabWidth, nextChar, nextKey, transformSelection, vsCommandAndSync } from './util';
 import { keyChar } from '../../core/keys';
+import { registerEntries, registerPreview, pickRegister } from '../../vscode/registers';
 
 // ---------------------------------------------------------------------------
 // Entering insert mode
@@ -552,23 +554,51 @@ export const addNewlineBelow: CommandFn = (cx) => addNewlineImpl(cx, false);
 // Undo / redo
 // ---------------------------------------------------------------------------
 
-export const undo: CommandFn = async (cx) => {
-  for (let i = 0; i < cx.count; i++) await vscode.commands.executeCommand('undo');
+async function historyStep(cx: CommandContext, count: number): Promise<void> {
+  const engine = cx.engine;
+  if (engine.history.mode === 'helix') {
+    const res = await engine.history.step(cx.editor, count);
+    if (res === 'done') return;
+    if (res !== 'fallback') {
+      cx.setStatus(res);
+      return;
+    }
+  }
+  for (let i = 0; i < Math.abs(count); i++) await vscode.commands.executeCommand(count < 0 ? 'undo' : 'redo');
   await new Promise((r) => setTimeout(r, 0));
   cx.editor.syncFromVscode();
   cx.editor.decorate();
-};
+}
 
-export const redo: CommandFn = async (cx) => {
-  for (let i = 0; i < cx.count; i++) await vscode.commands.executeCommand('redo');
-  await new Promise((r) => setTimeout(r, 0));
-  cx.editor.syncFromVscode();
-  cx.editor.decorate();
-};
+export const undo: CommandFn = (cx) => historyStep(cx, -cx.count);
+export const redo: CommandFn = (cx) => historyStep(cx, cx.count);
+
+/** `earlier` / `later` with a step count or a duration ("10s", "1m"); Alt-u / Alt-U use the count. */
+export async function historyTravel(cx: CommandContext, direction: 'earlier' | 'later', kind: UndoKind): Promise<void> {
+  const engine = cx.engine;
+  if (engine.history.mode !== 'helix' || !engine.history.hasHistory(cx.vs.document)) {
+    if ('ms' in kind) {
+      cx.setError('time-based history needs helicode.undo = "helix"');
+      return;
+    }
+    await historyStep(cx, direction === 'earlier' ? -kind.steps : kind.steps);
+    return;
+  }
+  const steps = engine.history.steps(cx.vs.document, kind, direction);
+  if (steps === 0) {
+    cx.setStatus(direction === 'earlier' ? 'Already at oldest change' : 'Already at newest change');
+    return;
+  }
+  await historyStep(cx, direction === 'earlier' ? -steps : steps);
+}
+
+export const earlier: CommandFn = (cx) => historyTravel(cx, 'earlier', { steps: cx.count });
+export const later: CommandFn = (cx) => historyTravel(cx, 'later', { steps: cx.count });
 
 export const commitUndoCheckpoint: CommandFn = async (cx) => {
   // Insert an undo stop by making an empty edit with stops around it.
   await cx.vs.edit(() => {}, { undoStopBefore: true, undoStopAfter: true });
+  cx.engine.history.commitDocument(cx.vs.document, cx.editor.fromVscode(cx.vs.selections));
 };
 
 // ---------------------------------------------------------------------------
@@ -617,11 +647,22 @@ export const replayMacro: CommandFn = async (cx) => {
 // ---------------------------------------------------------------------------
 
 export const selectRegister: CommandFn = async (cx) => {
-  const ch = await nextChar(cx, '"');
+  // Helix shows the register list in the infobox while waiting for the name.
+  const entries = await registerEntries(cx.engine);
+  const hint = entries.map((e) => ({ key: e.name, value: e.description || registerPreview(e.values) }));
+  const ch = await nextChar(cx, 'select register', hint);
   if (ch) {
     cx.engine.selectedRegister = ch;
     cx.setStatus(`register selected: ${ch}`);
   }
+};
+
+/** `Space "` / the command palette: pick a register from a list instead of typing its name. */
+export const selectRegisterPicker: CommandFn = async (cx) => {
+  const name = await pickRegister(cx.engine);
+  if (!name) return;
+  cx.engine.selectedRegister = name;
+  cx.setStatus(`register selected: ${name}`);
 };
 
 export { lineEndWithEol, Selection, transformSelection, Direction };

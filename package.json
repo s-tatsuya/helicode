@@ -1,8 +1,8 @@
 {
   "name": "helicode",
-  "displayName": "Helicode - Helix keybindings",
-  "description": "Faithful Helix editor keybindings for VS Code: selection-first editing, multiple cursors, match mode (mi/ma/ms/mr/md), jump labels (gw), tree-sitter textobjects (WASM) and : commands.",
-  "version": "0.1.0",
+  "displayName": "%extension.displayName%",
+  "description": "%extension.description%",
+  "version": "0.2.0",
   "publisher": "s-tatsuya",
   "license": "MIT",
   "repository": {
@@ -14,17 +14,23 @@
   },
   "categories": [
     "Keymaps",
+    "Programming Languages",
     "Other"
   ],
   "keywords": [
     "helix",
+    "hx",
     "kakoune",
     "modal",
     "vim",
+    "vi",
     "keybindings",
-    "tree-sitter"
+    "keymap",
+    "tree-sitter",
+    "multiple-cursors"
   ],
   "main": "./dist/extension.js",
+  "browser": "./dist/extension-web.js",
   "activationEvents": [
     "onStartupFinished"
   ],
@@ -36,23 +42,34 @@
     "commands": [
       {
         "command": "helicode.toggle",
-        "title": "Helicode: Toggle Helix keybindings"
+        "title": "%command.toggle.title%"
       },
       {
         "command": "helicode.normalMode",
-        "title": "Helicode: Enter normal mode"
+        "title": "%command.normalMode.title%"
       },
       {
         "command": "helicode.typed",
-        "title": "Helicode: Run : command"
+        "title": "%command.typed.title%"
       },
       {
         "command": "helicode.showKeymapHelp",
-        "title": "Helicode: Show keymap reference"
+        "title": "%command.showKeymapHelp.title%"
       },
       {
         "command": "helicode.showLog",
-        "title": "Helicode: Show log"
+        "title": "%command.showLog.title%"
+      },
+      {
+        "command": "helicode.importHelixConfig",
+        "title": "%command.importHelixConfig.title%",
+        "category": "%category.helicode%"
+      },
+      {
+        "command": "helicode.promptKey",
+        "title": "%command.promptKey.title%",
+        "category": "%category.helicode%",
+        "enablement": "false"
       }
     ],
     "keybindings": [
@@ -62,7 +79,7 @@
         "args": {
           "key": "esc"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !suggestWidgetVisible && !findWidgetVisible && !renameInputVisible && !parameterHintsVisible"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !suggestWidgetVisible && !findWidgetVisible && !renameInputVisible && !parameterHintsVisible && !helicode.passEscape"
       },
       {
         "key": "enter",
@@ -70,7 +87,7 @@
         "args": {
           "key": "ret"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passEnter"
       },
       {
         "key": "tab",
@@ -78,7 +95,7 @@
         "args": {
           "key": "tab"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passTab"
       },
       {
         "key": "shift+tab",
@@ -86,7 +103,7 @@
         "args": {
           "key": "S-tab"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passShiftTab"
       },
       {
         "key": "backspace",
@@ -94,7 +111,7 @@
         "args": {
           "key": "backspace"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passBackspace"
       },
       {
         "key": "shift+backspace",
@@ -102,7 +119,7 @@
         "args": {
           "key": "S-backspace"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passShiftBackspace"
       },
       {
         "key": "delete",
@@ -110,7 +127,7 @@
         "args": {
           "key": "del"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passDelete"
       },
       {
         "key": "insert",
@@ -118,7 +135,7 @@
         "args": {
           "key": "ins"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passInsert"
       },
       {
         "key": "up",
@@ -126,7 +143,7 @@
         "args": {
           "key": "up"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passUp"
       },
       {
         "key": "alt+up",
@@ -134,7 +151,7 @@
         "args": {
           "key": "A-up"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltUp"
       },
       {
         "key": "shift+up",
@@ -142,7 +159,7 @@
         "args": {
           "key": "S-up"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passShiftUp"
       },
       {
         "key": "down",
@@ -150,7 +167,7 @@
         "args": {
           "key": "down"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passDown"
       },
       {
         "key": "alt+down",
@@ -158,7 +175,7 @@
         "args": {
           "key": "A-down"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltDown"
       },
       {
         "key": "shift+down",
@@ -166,7 +183,7 @@
         "args": {
           "key": "S-down"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passShiftDown"
       },
       {
         "key": "left",
@@ -174,7 +191,7 @@
         "args": {
           "key": "left"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passLeft"
       },
       {
         "key": "alt+left",
@@ -182,7 +199,7 @@
         "args": {
           "key": "A-left"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltLeft"
       },
       {
         "key": "shift+left",
@@ -190,7 +207,7 @@
         "args": {
           "key": "S-left"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passShiftLeft"
       },
       {
         "key": "right",
@@ -198,7 +215,7 @@
         "args": {
           "key": "right"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passRight"
       },
       {
         "key": "alt+right",
@@ -206,7 +223,7 @@
         "args": {
           "key": "A-right"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltRight"
       },
       {
         "key": "shift+right",
@@ -214,7 +231,7 @@
         "args": {
           "key": "S-right"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passShiftRight"
       },
       {
         "key": "home",
@@ -222,7 +239,7 @@
         "args": {
           "key": "home"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passHome"
       },
       {
         "key": "alt+home",
@@ -230,7 +247,7 @@
         "args": {
           "key": "A-home"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltHome"
       },
       {
         "key": "shift+home",
@@ -238,7 +255,7 @@
         "args": {
           "key": "S-home"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passShiftHome"
       },
       {
         "key": "end",
@@ -246,7 +263,7 @@
         "args": {
           "key": "end"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passEnd"
       },
       {
         "key": "alt+end",
@@ -254,7 +271,7 @@
         "args": {
           "key": "A-end"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltEnd"
       },
       {
         "key": "shift+end",
@@ -262,7 +279,7 @@
         "args": {
           "key": "S-end"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passShiftEnd"
       },
       {
         "key": "pageup",
@@ -270,7 +287,7 @@
         "args": {
           "key": "pageup"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passPageup"
       },
       {
         "key": "alt+pageup",
@@ -278,7 +295,7 @@
         "args": {
           "key": "A-pageup"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltPageup"
       },
       {
         "key": "shift+pageup",
@@ -286,7 +303,7 @@
         "args": {
           "key": "S-pageup"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passShiftPageup"
       },
       {
         "key": "pagedown",
@@ -294,7 +311,7 @@
         "args": {
           "key": "pagedown"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passPagedown"
       },
       {
         "key": "alt+pagedown",
@@ -302,7 +319,7 @@
         "args": {
           "key": "A-pagedown"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltPagedown"
       },
       {
         "key": "shift+pagedown",
@@ -310,7 +327,7 @@
         "args": {
           "key": "S-pagedown"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passShiftPagedown"
       },
       {
         "key": "alt+shift+down",
@@ -318,7 +335,7 @@
         "args": {
           "key": "A-S-down"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltShiftDown"
       },
       {
         "key": "ctrl+a",
@@ -326,7 +343,7 @@
         "args": {
           "key": "C-a"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlA"
       },
       {
         "key": "ctrl+b",
@@ -334,7 +351,7 @@
         "args": {
           "key": "C-b"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlB"
       },
       {
         "key": "ctrl+c",
@@ -342,7 +359,7 @@
         "args": {
           "key": "C-c"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlC"
       },
       {
         "key": "ctrl+d",
@@ -350,7 +367,7 @@
         "args": {
           "key": "C-d"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlD"
       },
       {
         "key": "ctrl+f",
@@ -358,7 +375,7 @@
         "args": {
           "key": "C-f"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlF"
       },
       {
         "key": "ctrl+i",
@@ -366,7 +383,7 @@
         "args": {
           "key": "C-i"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlI"
       },
       {
         "key": "ctrl+o",
@@ -374,7 +391,7 @@
         "args": {
           "key": "C-o"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlO"
       },
       {
         "key": "ctrl+s",
@@ -382,7 +399,7 @@
         "args": {
           "key": "C-s"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlS"
       },
       {
         "key": "ctrl+u",
@@ -390,7 +407,7 @@
         "args": {
           "key": "C-u"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlU"
       },
       {
         "key": "ctrl+w",
@@ -398,7 +415,7 @@
         "args": {
           "key": "C-w"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlW"
       },
       {
         "key": "ctrl+x",
@@ -406,7 +423,7 @@
         "args": {
           "key": "C-x"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlX"
       },
       {
         "key": "ctrl+z",
@@ -414,7 +431,7 @@
         "args": {
           "key": "C-z"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlZ"
       },
       {
         "key": "ctrl+h",
@@ -422,7 +439,7 @@
         "args": {
           "key": "C-h"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlH"
       },
       {
         "key": "ctrl+j",
@@ -430,7 +447,7 @@
         "args": {
           "key": "C-j"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlJ"
       },
       {
         "key": "ctrl+k",
@@ -438,7 +455,7 @@
         "args": {
           "key": "C-k"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlK"
       },
       {
         "key": "ctrl+l",
@@ -446,7 +463,7 @@
         "args": {
           "key": "C-l"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlL"
       },
       {
         "key": "ctrl+q",
@@ -454,7 +471,7 @@
         "args": {
           "key": "C-q"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlQ"
       },
       {
         "key": "ctrl+t",
@@ -462,7 +479,7 @@
         "args": {
           "key": "C-t"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlT"
       },
       {
         "key": "ctrl+v",
@@ -470,7 +487,7 @@
         "args": {
           "key": "C-v"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlV"
       },
       {
         "key": "ctrl+e",
@@ -478,7 +495,7 @@
         "args": {
           "key": "C-e"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlE"
       },
       {
         "key": "ctrl+y",
@@ -486,7 +503,7 @@
         "args": {
           "key": "C-y"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlY"
       },
       {
         "key": "ctrl+n",
@@ -494,7 +511,7 @@
         "args": {
           "key": "C-n"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlN"
       },
       {
         "key": "ctrl+p",
@@ -502,7 +519,7 @@
         "args": {
           "key": "C-p"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlP"
       },
       {
         "key": "ctrl+g",
@@ -510,7 +527,7 @@
         "args": {
           "key": "C-g"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlG"
       },
       {
         "key": "ctrl+r",
@@ -518,7 +535,7 @@
         "args": {
           "key": "C-r"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passCtrlR"
       },
       {
         "key": "alt+.",
@@ -526,7 +543,7 @@
         "args": {
           "key": "A-."
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAlt"
       },
       {
         "key": "alt+`",
@@ -534,7 +551,7 @@
         "args": {
           "key": "A-`"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAlt"
       },
       {
         "key": "alt+d",
@@ -542,7 +559,7 @@
         "args": {
           "key": "A-d"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltD"
       },
       {
         "key": "alt+c",
@@ -550,7 +567,7 @@
         "args": {
           "key": "A-c"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltC"
       },
       {
         "key": "alt+shift+c",
@@ -558,7 +575,7 @@
         "args": {
           "key": "A-C"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltShiftC"
       },
       {
         "key": "alt+s",
@@ -566,7 +583,7 @@
         "args": {
           "key": "A-s"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltS"
       },
       {
         "key": "alt+-",
@@ -574,7 +591,7 @@
         "args": {
           "key": "A-minus"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAlt"
       },
       {
         "key": "alt+shift+-",
@@ -582,7 +599,7 @@
         "args": {
           "key": "A-_"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltShift"
       },
       {
         "key": "alt+;",
@@ -590,7 +607,7 @@
         "args": {
           "key": "A-;"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAlt"
       },
       {
         "key": "alt+shift+;",
@@ -598,7 +615,7 @@
         "args": {
           "key": "A-:"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltShift"
       },
       {
         "key": "alt+o",
@@ -606,7 +623,7 @@
         "args": {
           "key": "A-o"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltO"
       },
       {
         "key": "alt+i",
@@ -614,7 +631,7 @@
         "args": {
           "key": "A-i"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltI"
       },
       {
         "key": "alt+shift+i",
@@ -622,7 +639,7 @@
         "args": {
           "key": "A-I"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltShiftI"
       },
       {
         "key": "alt+p",
@@ -630,7 +647,7 @@
         "args": {
           "key": "A-p"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltP"
       },
       {
         "key": "alt+n",
@@ -638,7 +655,7 @@
         "args": {
           "key": "A-n"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltN"
       },
       {
         "key": "alt+e",
@@ -646,7 +663,7 @@
         "args": {
           "key": "A-e"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltE"
       },
       {
         "key": "alt+b",
@@ -654,7 +671,7 @@
         "args": {
           "key": "A-b"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltB"
       },
       {
         "key": "alt+a",
@@ -662,7 +679,7 @@
         "args": {
           "key": "A-a"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltA"
       },
       {
         "key": "alt+x",
@@ -670,7 +687,7 @@
         "args": {
           "key": "A-x"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltX"
       },
       {
         "key": "alt+u",
@@ -678,7 +695,7 @@
         "args": {
           "key": "A-u"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltU"
       },
       {
         "key": "alt+shift+u",
@@ -686,7 +703,7 @@
         "args": {
           "key": "A-U"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltShiftU"
       },
       {
         "key": "alt+shift+j",
@@ -694,7 +711,7 @@
         "args": {
           "key": "A-J"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltShiftJ"
       },
       {
         "key": "alt+shift+k",
@@ -702,7 +719,7 @@
         "args": {
           "key": "A-K"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltShiftK"
       },
       {
         "key": "alt+,",
@@ -710,7 +727,7 @@
         "args": {
           "key": "A-,"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAlt"
       },
       {
         "key": "alt+shift+9",
@@ -718,7 +735,7 @@
         "args": {
           "key": "A-("
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltShift9"
       },
       {
         "key": "alt+shift+0",
@@ -726,7 +743,7 @@
         "args": {
           "key": "A-)"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltShift0"
       },
       {
         "key": "alt+shift+\\",
@@ -734,7 +751,7 @@
         "args": {
           "key": "A-|"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltShift"
       },
       {
         "key": "alt+shift+1",
@@ -742,7 +759,7 @@
         "args": {
           "key": "A-!"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltShift1"
       },
       {
         "key": "alt+shift+8",
@@ -750,7 +767,7 @@
         "args": {
           "key": "A-*"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltShift8"
       },
       {
         "key": "alt+k",
@@ -758,7 +775,7 @@
         "args": {
           "key": "A-k"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltK"
       },
       {
         "key": "alt+j",
@@ -766,7 +783,7 @@
         "args": {
           "key": "A-j"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltJ"
       },
       {
         "key": "alt+h",
@@ -774,7 +791,7 @@
         "args": {
           "key": "A-h"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltH"
       },
       {
         "key": "alt+l",
@@ -782,7 +799,7 @@
         "args": {
           "key": "A-l"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltL"
       },
       {
         "key": "alt+w",
@@ -790,7 +807,7 @@
         "args": {
           "key": "A-w"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltW"
       },
       {
         "key": "alt+f",
@@ -798,7 +815,7 @@
         "args": {
           "key": "A-f"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltF"
       },
       {
         "key": "alt+t",
@@ -806,7 +823,7 @@
         "args": {
           "key": "A-t"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltT"
       },
       {
         "key": "alt+g",
@@ -814,7 +831,7 @@
         "args": {
           "key": "A-g"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltG"
       },
       {
         "key": "alt+m",
@@ -822,7 +839,7 @@
         "args": {
           "key": "A-m"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltM"
       },
       {
         "key": "alt+r",
@@ -830,7 +847,7 @@
         "args": {
           "key": "A-r"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltR"
       },
       {
         "key": "alt+v",
@@ -838,7 +855,7 @@
         "args": {
           "key": "A-v"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltV"
       },
       {
         "key": "alt+y",
@@ -846,7 +863,7 @@
         "args": {
           "key": "A-y"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltY"
       },
       {
         "key": "alt+z",
@@ -854,7 +871,7 @@
         "args": {
           "key": "A-z"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltZ"
       },
       {
         "key": "alt+q",
@@ -862,7 +879,7 @@
         "args": {
           "key": "A-q"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode != 'insert' && !helicode.passAltQ"
       },
       {
         "key": "escape",
@@ -870,7 +887,7 @@
         "args": {
           "key": "esc"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert' && !suggestWidgetVisible && !findWidgetVisible && !renameInputVisible && !parameterHintsVisible && !inlineSuggestionVisible && !inSnippetMode"
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert' && !suggestWidgetVisible && !findWidgetVisible && !renameInputVisible && !parameterHintsVisible && !inlineSuggestionVisible && !inSnippetMode && !helicode.passEscape"
       },
       {
         "key": "ctrl+s",
@@ -878,7 +895,7 @@
         "args": {
           "key": "C-s"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert' && !helicode.passCtrlS"
       },
       {
         "key": "ctrl+x",
@@ -886,7 +903,7 @@
         "args": {
           "key": "C-x"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert' && !suggestWidgetVisible"
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert' && !suggestWidgetVisible && !helicode.passCtrlX"
       },
       {
         "key": "ctrl+r",
@@ -894,7 +911,7 @@
         "args": {
           "key": "C-r"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert' && !helicode.passCtrlR"
       },
       {
         "key": "ctrl+w",
@@ -902,7 +919,7 @@
         "args": {
           "key": "C-w"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert' && !helicode.passCtrlW"
       },
       {
         "key": "alt+backspace",
@@ -910,7 +927,7 @@
         "args": {
           "key": "A-backspace"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert' && !helicode.passAltBackspace"
       },
       {
         "key": "alt+d",
@@ -918,7 +935,7 @@
         "args": {
           "key": "A-d"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert' && !helicode.passAltD"
       },
       {
         "key": "alt+delete",
@@ -926,7 +943,7 @@
         "args": {
           "key": "A-del"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert' && !helicode.passAltDelete"
       },
       {
         "key": "ctrl+u",
@@ -934,7 +951,7 @@
         "args": {
           "key": "C-u"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert' && !helicode.passCtrlU"
       },
       {
         "key": "ctrl+k",
@@ -942,7 +959,7 @@
         "args": {
           "key": "C-k"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert' && !helicode.passCtrlK"
       },
       {
         "key": "ctrl+h",
@@ -950,7 +967,7 @@
         "args": {
           "key": "C-h"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert' && !helicode.passCtrlH"
       },
       {
         "key": "ctrl+d",
@@ -958,7 +975,7 @@
         "args": {
           "key": "C-d"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert'"
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert' && !helicode.passCtrlD"
       },
       {
         "key": "ctrl+j",
@@ -966,7 +983,7 @@
         "args": {
           "key": "C-j"
         },
-        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert' && !suggestWidgetVisible"
+        "when": "editorTextFocus && helicode.active && helicode.mode == 'insert' && !suggestWidgetVisible && !helicode.passCtrlJ"
       },
       {
         "key": "ctrl+alt+escape",
@@ -974,223 +991,1930 @@
         "when": "editorTextFocus && helicode.active"
       },
       {
-        "key": "j",
-        "command": "list.focusDown",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "k",
-        "command": "list.focusUp",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "g g",
-        "command": "list.focusFirst",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "shift+g",
-        "command": "list.focusLast",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "enter",
-        "command": "notebook.cell.edit",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "i",
-        "command": "notebook.cell.edit",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "a",
-        "command": "notebook.cell.edit",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "o",
-        "command": "notebook.cell.insertCodeCellBelow",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "shift+o",
-        "command": "notebook.cell.insertCodeCellAbove",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "d d",
-        "command": "notebook.cell.delete",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "y y",
-        "command": "notebook.cell.copy",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "x",
-        "command": "notebook.cell.cut",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "p",
-        "command": "notebook.cell.paste",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "shift+p",
-        "command": "notebook.cell.pasteAbove",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "u",
-        "command": "notebook.undo",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "shift+u",
-        "command": "notebook.redo",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "shift+j",
-        "command": "notebook.cell.moveDown",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "shift+k",
-        "command": "notebook.cell.moveUp",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "m",
-        "command": "notebook.cell.changeToMarkdown",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "c",
-        "command": "notebook.cell.changeToCode",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "z c",
-        "command": "notebook.cell.collapseCellInput",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "z o",
-        "command": "notebook.cell.expandCellInput",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "shift+z shift+c",
-        "command": "notebook.cell.collapseCellOutput",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "shift+z shift+o",
-        "command": "notebook.cell.expandCellOutput",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "ctrl+d",
-        "command": "notebook.cell.focusInOutput",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "space enter",
-        "command": "notebook.cell.execute",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "space a",
-        "command": "notebook.execute",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "space c",
-        "command": "notebook.clearAllCellsOutputs",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "space r",
-        "command": "jupyter.restartkernel",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
-        "key": "escape",
-        "command": "notebook.cell.quitEdit",
-        "when": "notebookEditorFocused && !inputFocus && helicode.active"
-      },
-      {
         "key": "ctrl+w h",
         "command": "workbench.action.focusLeftGroup",
-        "when": "activeWebviewPanelId == 'markdown.preview' && helicode.active"
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
       },
       {
-        "key": "ctrl+w l",
-        "command": "workbench.action.focusRightGroup",
-        "when": "activeWebviewPanelId == 'markdown.preview' && helicode.active"
+        "key": "ctrl+w left",
+        "command": "workbench.action.focusLeftGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+h",
+        "command": "workbench.action.focusLeftGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
       },
       {
         "key": "ctrl+w j",
         "command": "workbench.action.focusBelowGroup",
-        "when": "activeWebviewPanelId == 'markdown.preview' && helicode.active"
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w down",
+        "command": "workbench.action.focusBelowGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+j",
+        "command": "workbench.action.focusBelowGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
       },
       {
         "key": "ctrl+w k",
         "command": "workbench.action.focusAboveGroup",
-        "when": "activeWebviewPanelId == 'markdown.preview' && helicode.active"
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
       },
       {
-        "key": "ctrl+w q",
-        "command": "workbench.action.closeActiveEditor",
-        "when": "activeWebviewPanelId == 'markdown.preview' && helicode.active"
+        "key": "ctrl+w up",
+        "command": "workbench.action.focusAboveGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+k",
+        "command": "workbench.action.focusAboveGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w l",
+        "command": "workbench.action.focusRightGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w right",
+        "command": "workbench.action.focusRightGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+l",
+        "command": "workbench.action.focusRightGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
       },
       {
         "key": "ctrl+w w",
         "command": "workbench.action.focusNextGroup",
-        "when": "activeWebviewPanelId == 'markdown.preview' && helicode.active"
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+w",
+        "command": "workbench.action.focusNextGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+h",
+        "command": "workbench.action.moveActiveEditorGroupLeft",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+j",
+        "command": "workbench.action.moveActiveEditorGroupDown",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+k",
+        "command": "workbench.action.moveActiveEditorGroupUp",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+l",
+        "command": "workbench.action.moveActiveEditorGroupRight",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w s",
+        "command": "workbench.action.splitEditorDown",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+s",
+        "command": "workbench.action.splitEditorDown",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w v",
+        "command": "workbench.action.splitEditor",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+v",
+        "command": "workbench.action.splitEditor",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w t",
+        "command": "workbench.action.toggleEditorGroupLayout",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+t",
+        "command": "workbench.action.toggleEditorGroupLayout",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w q",
+        "command": "workbench.action.closeActiveEditor",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+q",
+        "command": "workbench.action.closeActiveEditor",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w o",
+        "command": "workbench.action.joinAllGroups",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+o",
+        "command": "workbench.action.joinAllGroups",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w n",
+        "command": "workbench.action.nextEditorInGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w p",
+        "command": "workbench.action.previousEditorInGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 1",
+        "command": "workbench.action.focusFirstEditorGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 2",
+        "command": "workbench.action.focusSecondEditorGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 3",
+        "command": "workbench.action.focusThirdEditorGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 4",
+        "command": "workbench.action.focusFourthEditorGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 5",
+        "command": "workbench.action.focusFifthEditorGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 6",
+        "command": "workbench.action.focusSixthEditorGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 7",
+        "command": "workbench.action.focusSeventhEditorGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 8",
+        "command": "workbench.action.focusEighthEditorGroup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w =",
+        "command": "workbench.action.evenEditorWidths",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w c",
+        "command": "helicode.command",
+        "args": "corral_new_terminal",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+s",
+        "command": "helicode.command",
+        "args": "corral_split_down",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+v",
+        "command": "helicode.command",
+        "args": "corral_split_right",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w z",
+        "command": "helicode.command",
+        "args": "corral_zoom_pane",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w x",
+        "command": "helicode.command",
+        "args": "corral_close_pane",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ;",
+        "command": "helicode.command",
+        "args": "corral_focus_last_pane",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ,",
+        "command": "helicode.command",
+        "args": "corral_rename_terminal",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w a",
+        "command": "helicode.command",
+        "args": "corral_pick_agent",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+a",
+        "command": "helicode.command",
+        "args": "corral_spawn_agent",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w i",
+        "command": "helicode.command",
+        "args": "corral_prompt_agent",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+e",
+        "command": "helicode.command",
+        "args": "corral_focus_view",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+d",
+        "command": "helicode.command",
+        "args": "corral_send_review",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w d",
+        "command": "helicode.command",
+        "args": "corral_review_changes",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+p",
+        "command": "helicode.command",
+        "args": "corral_popup",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w g",
+        "command": "helicode.command",
+        "args": "corral_lazygit",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w r",
+        "command": "helicode.command",
+        "args": "corral_apply_layout",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+r",
+        "command": "helicode.command",
+        "args": "corral_save_layout",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+w",
+        "command": "helicode.command",
+        "args": "corral_new_worktree",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+/",
+        "command": "helicode.command",
+        "args": "corral_show_keymap",
+        "when": "terminalFocus && config.helicode.windowKeysEverywhere == 'all' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w h",
+        "command": "workbench.action.focusLeftGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w left",
+        "command": "workbench.action.focusLeftGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+h",
+        "command": "workbench.action.focusLeftGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w j",
+        "command": "workbench.action.focusBelowGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w down",
+        "command": "workbench.action.focusBelowGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+j",
+        "command": "workbench.action.focusBelowGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w k",
+        "command": "workbench.action.focusAboveGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w up",
+        "command": "workbench.action.focusAboveGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+k",
+        "command": "workbench.action.focusAboveGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w l",
+        "command": "workbench.action.focusRightGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w right",
+        "command": "workbench.action.focusRightGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+l",
+        "command": "workbench.action.focusRightGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w w",
+        "command": "workbench.action.focusNextGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+w",
+        "command": "workbench.action.focusNextGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+h",
+        "command": "workbench.action.moveActiveEditorGroupLeft",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+j",
+        "command": "workbench.action.moveActiveEditorGroupDown",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+k",
+        "command": "workbench.action.moveActiveEditorGroupUp",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+l",
+        "command": "workbench.action.moveActiveEditorGroupRight",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w s",
+        "command": "workbench.action.splitEditorDown",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+s",
+        "command": "workbench.action.splitEditorDown",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w v",
+        "command": "workbench.action.splitEditor",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+v",
+        "command": "workbench.action.splitEditor",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w t",
+        "command": "workbench.action.toggleEditorGroupLayout",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+t",
+        "command": "workbench.action.toggleEditorGroupLayout",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w q",
+        "command": "workbench.action.closeActiveEditor",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+q",
+        "command": "workbench.action.closeActiveEditor",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w o",
+        "command": "workbench.action.joinAllGroups",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+o",
+        "command": "workbench.action.joinAllGroups",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w n",
+        "command": "workbench.action.nextEditorInGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w p",
+        "command": "workbench.action.previousEditorInGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 1",
+        "command": "workbench.action.focusFirstEditorGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 2",
+        "command": "workbench.action.focusSecondEditorGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 3",
+        "command": "workbench.action.focusThirdEditorGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 4",
+        "command": "workbench.action.focusFourthEditorGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 5",
+        "command": "workbench.action.focusFifthEditorGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 6",
+        "command": "workbench.action.focusSixthEditorGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 7",
+        "command": "workbench.action.focusSeventhEditorGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 8",
+        "command": "workbench.action.focusEighthEditorGroup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w =",
+        "command": "workbench.action.evenEditorWidths",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w c",
+        "command": "helicode.command",
+        "args": "corral_new_terminal",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+s",
+        "command": "helicode.command",
+        "args": "corral_split_down",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+v",
+        "command": "helicode.command",
+        "args": "corral_split_right",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w z",
+        "command": "helicode.command",
+        "args": "corral_zoom_pane",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w x",
+        "command": "helicode.command",
+        "args": "corral_close_pane",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ;",
+        "command": "helicode.command",
+        "args": "corral_focus_last_pane",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ,",
+        "command": "helicode.command",
+        "args": "corral_rename_terminal",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w a",
+        "command": "helicode.command",
+        "args": "corral_pick_agent",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+a",
+        "command": "helicode.command",
+        "args": "corral_spawn_agent",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w i",
+        "command": "helicode.command",
+        "args": "corral_prompt_agent",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+e",
+        "command": "helicode.command",
+        "args": "corral_focus_view",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+d",
+        "command": "helicode.command",
+        "args": "corral_send_review",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w d",
+        "command": "helicode.command",
+        "args": "corral_review_changes",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+p",
+        "command": "helicode.command",
+        "args": "corral_popup",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w g",
+        "command": "helicode.command",
+        "args": "corral_lazygit",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w r",
+        "command": "helicode.command",
+        "args": "corral_apply_layout",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+r",
+        "command": "helicode.command",
+        "args": "corral_save_layout",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+w",
+        "command": "helicode.command",
+        "args": "corral_new_worktree",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+/",
+        "command": "helicode.command",
+        "args": "corral_show_keymap",
+        "when": "listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w h",
+        "command": "workbench.action.focusLeftGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w left",
+        "command": "workbench.action.focusLeftGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+h",
+        "command": "workbench.action.focusLeftGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w j",
+        "command": "workbench.action.focusBelowGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w down",
+        "command": "workbench.action.focusBelowGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+j",
+        "command": "workbench.action.focusBelowGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w k",
+        "command": "workbench.action.focusAboveGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w up",
+        "command": "workbench.action.focusAboveGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+k",
+        "command": "workbench.action.focusAboveGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w l",
+        "command": "workbench.action.focusRightGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w right",
+        "command": "workbench.action.focusRightGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+l",
+        "command": "workbench.action.focusRightGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w w",
+        "command": "workbench.action.focusNextGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+w",
+        "command": "workbench.action.focusNextGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+h",
+        "command": "workbench.action.moveActiveEditorGroupLeft",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+j",
+        "command": "workbench.action.moveActiveEditorGroupDown",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+k",
+        "command": "workbench.action.moveActiveEditorGroupUp",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+l",
+        "command": "workbench.action.moveActiveEditorGroupRight",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w s",
+        "command": "workbench.action.splitEditorDown",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+s",
+        "command": "workbench.action.splitEditorDown",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w v",
+        "command": "workbench.action.splitEditor",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+v",
+        "command": "workbench.action.splitEditor",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w t",
+        "command": "workbench.action.toggleEditorGroupLayout",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+t",
+        "command": "workbench.action.toggleEditorGroupLayout",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w q",
+        "command": "workbench.action.closeActiveEditor",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+q",
+        "command": "workbench.action.closeActiveEditor",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w o",
+        "command": "workbench.action.joinAllGroups",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ctrl+o",
+        "command": "workbench.action.joinAllGroups",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w n",
+        "command": "workbench.action.nextEditorInGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w p",
+        "command": "workbench.action.previousEditorInGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 1",
+        "command": "workbench.action.focusFirstEditorGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 2",
+        "command": "workbench.action.focusSecondEditorGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 3",
+        "command": "workbench.action.focusThirdEditorGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 4",
+        "command": "workbench.action.focusFourthEditorGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 5",
+        "command": "workbench.action.focusFifthEditorGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 6",
+        "command": "workbench.action.focusSixthEditorGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 7",
+        "command": "workbench.action.focusSeventhEditorGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w 8",
+        "command": "workbench.action.focusEighthEditorGroup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w =",
+        "command": "workbench.action.evenEditorWidths",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w c",
+        "command": "helicode.command",
+        "args": "corral_new_terminal",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+s",
+        "command": "helicode.command",
+        "args": "corral_split_down",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+v",
+        "command": "helicode.command",
+        "args": "corral_split_right",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w z",
+        "command": "helicode.command",
+        "args": "corral_zoom_pane",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w x",
+        "command": "helicode.command",
+        "args": "corral_close_pane",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ;",
+        "command": "helicode.command",
+        "args": "corral_focus_last_pane",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w ,",
+        "command": "helicode.command",
+        "args": "corral_rename_terminal",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w a",
+        "command": "helicode.command",
+        "args": "corral_pick_agent",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+a",
+        "command": "helicode.command",
+        "args": "corral_spawn_agent",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w i",
+        "command": "helicode.command",
+        "args": "corral_prompt_agent",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+e",
+        "command": "helicode.command",
+        "args": "corral_focus_view",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+d",
+        "command": "helicode.command",
+        "args": "corral_send_review",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w d",
+        "command": "helicode.command",
+        "args": "corral_review_changes",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+p",
+        "command": "helicode.command",
+        "args": "corral_popup",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w g",
+        "command": "helicode.command",
+        "args": "corral_lazygit",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w r",
+        "command": "helicode.command",
+        "args": "corral_apply_layout",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+r",
+        "command": "helicode.command",
+        "args": "corral_save_layout",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+w",
+        "command": "helicode.command",
+        "args": "corral_new_worktree",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w shift+/",
+        "command": "helicode.command",
+        "args": "corral_show_keymap",
+        "when": "!editorTextFocus && !terminalFocus && !listFocus && !inputFocus && config.helicode.windowKeysEverywhere != 'off' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "j",
+        "command": "list.focusDown",
+        "when": "listFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passJ"
+      },
+      {
+        "key": "k",
+        "command": "list.focusUp",
+        "when": "listFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passK"
+      },
+      {
+        "key": "h",
+        "command": "list.collapse",
+        "when": "listFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passH"
+      },
+      {
+        "key": "l",
+        "command": "list.expand",
+        "when": "listFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passL"
+      },
+      {
+        "key": "g g",
+        "command": "list.focusFirst",
+        "when": "listFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passG"
+      },
+      {
+        "key": "shift+g",
+        "command": "list.focusLast",
+        "when": "listFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passShiftG"
+      },
+      {
+        "key": "ctrl+d",
+        "command": "list.focusPageDown",
+        "when": "listFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passCtrlD"
+      },
+      {
+        "key": "ctrl+u",
+        "command": "list.focusPageUp",
+        "when": "listFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passCtrlU"
+      },
+      {
+        "key": "ctrl+f",
+        "command": "list.focusPageDown",
+        "when": "listFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passCtrlF"
+      },
+      {
+        "key": "ctrl+b",
+        "command": "list.focusPageUp",
+        "when": "listFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passCtrlB"
+      },
+      {
+        "key": "enter",
+        "command": "list.select",
+        "when": "listFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passEnter"
+      },
+      {
+        "key": "o",
+        "command": "list.select",
+        "when": "listFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passO"
+      },
+      {
+        "key": "space",
+        "command": "list.toggleExpand",
+        "when": "listFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passSpace"
+      },
+      {
+        "key": "/",
+        "command": "list.find",
+        "when": "listFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.pass"
+      },
+      {
+        "key": "n",
+        "command": "list.focusDown",
+        "when": "listFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passN"
+      },
+      {
+        "key": "shift+n",
+        "command": "list.focusUp",
+        "when": "listFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passShiftN"
+      },
+      {
+        "key": "z c",
+        "command": "list.collapse",
+        "when": "listFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passZ"
+      },
+      {
+        "key": "z o",
+        "command": "list.expand",
+        "when": "listFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passZ"
+      },
+      {
+        "key": "shift+z shift+c",
+        "command": "list.collapseAll",
+        "when": "listFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passShiftZ"
+      },
+      {
+        "key": "%",
+        "command": "explorer.newFile",
+        "when": "filesExplorerFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.pass"
+      },
+      {
+        "key": "shift+5",
+        "command": "explorer.newFile",
+        "when": "filesExplorerFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passShift5"
+      },
+      {
+        "key": "shift+a",
+        "command": "explorer.newFolder",
+        "when": "filesExplorerFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passShiftA"
+      },
+      {
+        "key": "r",
+        "command": "renameFile",
+        "when": "filesExplorerFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passR"
+      },
+      {
+        "key": "d",
+        "command": "deleteFile",
+        "when": "filesExplorerFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passD"
+      },
+      {
+        "key": "y",
+        "command": "filesExplorer.copy",
+        "when": "filesExplorerFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passY"
+      },
+      {
+        "key": "p",
+        "command": "filesExplorer.paste",
+        "when": "filesExplorerFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passP"
+      },
+      {
+        "key": "x",
+        "command": "filesExplorer.cut",
+        "when": "filesExplorerFocus && !inputFocus && helicode.active && config.helicode.listNavigation && !helicode.passX"
+      },
+      {
+        "key": "j",
+        "command": "notebook.focusNextEditor",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passJ"
+      },
+      {
+        "key": "k",
+        "command": "notebook.focusPreviousEditor",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passK"
+      },
+      {
+        "key": "g g",
+        "command": "notebook.focusTop",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passG"
+      },
+      {
+        "key": "shift+g",
+        "command": "notebook.focusBottom",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passShiftG"
+      },
+      {
+        "key": "enter",
+        "command": "notebook.cell.edit",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passEnter"
+      },
+      {
+        "key": "i",
+        "command": "notebook.cell.edit",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passI"
+      },
+      {
+        "key": "a",
+        "command": "notebook.cell.edit",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passA"
+      },
+      {
+        "key": "o",
+        "command": "notebook.cell.insertCodeCellBelow",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passO"
+      },
+      {
+        "key": "shift+o",
+        "command": "notebook.cell.insertCodeCellAbove",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passShiftO"
+      },
+      {
+        "key": "d d",
+        "command": "notebook.cell.delete",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passD"
+      },
+      {
+        "key": "y y",
+        "command": "notebook.cell.copy",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passY"
+      },
+      {
+        "key": "x",
+        "command": "notebook.cell.cut",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passX"
+      },
+      {
+        "key": "p",
+        "command": "notebook.cell.paste",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passP"
+      },
+      {
+        "key": "shift+p",
+        "command": "notebook.cell.pasteAbove",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passShiftP"
+      },
+      {
+        "key": "u",
+        "command": "notebook.undo",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passU"
+      },
+      {
+        "key": "shift+u",
+        "command": "notebook.redo",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passShiftU"
+      },
+      {
+        "key": "shift+j",
+        "command": "notebook.cell.moveDown",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passShiftJ"
+      },
+      {
+        "key": "shift+k",
+        "command": "notebook.cell.moveUp",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passShiftK"
+      },
+      {
+        "key": "m",
+        "command": "notebook.cell.changeToMarkdown",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passM"
+      },
+      {
+        "key": "c",
+        "command": "notebook.cell.changeToCode",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passC"
+      },
+      {
+        "key": "z c",
+        "command": "notebook.cell.collapseCellInput",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passZ"
+      },
+      {
+        "key": "z o",
+        "command": "notebook.cell.expandCellInput",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passZ"
+      },
+      {
+        "key": "shift+z shift+c",
+        "command": "notebook.cell.collapseCellOutput",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passShiftZ"
+      },
+      {
+        "key": "shift+z shift+o",
+        "command": "notebook.cell.expandCellOutput",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passShiftZ"
+      },
+      {
+        "key": "ctrl+d",
+        "command": "notebook.cell.focusInOutput",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passCtrlD"
+      },
+      {
+        "key": "space enter",
+        "command": "notebook.cell.execute",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passSpace"
+      },
+      {
+        "key": "space a",
+        "command": "notebook.execute",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passSpace"
+      },
+      {
+        "key": "space c",
+        "command": "notebook.clearAllCellsOutputs",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passSpace"
+      },
+      {
+        "key": "space r",
+        "command": "jupyter.restartkernel",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passSpace"
+      },
+      {
+        "key": "slash",
+        "command": "notebook.find",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passSlash"
+      },
+      {
+        "key": "escape",
+        "command": "notebook.cell.quitEdit",
+        "when": "notebookEditorFocused && !inputFocus && helicode.active && !helicode.passEscape"
+      },
+      {
+        "key": "ctrl+w h",
+        "command": "workbench.action.focusLeftGroup",
+        "when": "activeWebviewPanelId == 'markdown.preview' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w l",
+        "command": "workbench.action.focusRightGroup",
+        "when": "activeWebviewPanelId == 'markdown.preview' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w j",
+        "command": "workbench.action.focusBelowGroup",
+        "when": "activeWebviewPanelId == 'markdown.preview' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w k",
+        "command": "workbench.action.focusAboveGroup",
+        "when": "activeWebviewPanelId == 'markdown.preview' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w q",
+        "command": "workbench.action.closeActiveEditor",
+        "when": "activeWebviewPanelId == 'markdown.preview' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+w w",
+        "command": "workbench.action.focusNextGroup",
+        "when": "activeWebviewPanelId == 'markdown.preview' && helicode.active && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+r",
+        "command": "helicode.promptKey",
+        "args": {
+          "key": "C-r"
+        },
+        "when": "helicode.promptOpen && inQuickOpen"
+      },
+      {
+        "key": "ctrl+a",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-a"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlA"
+      },
+      {
+        "key": "ctrl+b",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-b"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlB"
+      },
+      {
+        "key": "ctrl+c",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-c"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlC"
+      },
+      {
+        "key": "ctrl+d",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-d"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlD"
+      },
+      {
+        "key": "ctrl+f",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-f"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlF"
+      },
+      {
+        "key": "ctrl+i",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-i"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlI"
+      },
+      {
+        "key": "ctrl+o",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-o"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlO"
+      },
+      {
+        "key": "ctrl+s",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-s"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlS"
+      },
+      {
+        "key": "ctrl+u",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-u"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlU"
+      },
+      {
+        "key": "ctrl+w",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-w"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlW"
+      },
+      {
+        "key": "ctrl+x",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-x"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlX"
+      },
+      {
+        "key": "ctrl+z",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-z"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlZ"
+      },
+      {
+        "key": "ctrl+h",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-h"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlH"
+      },
+      {
+        "key": "ctrl+j",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-j"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlJ"
+      },
+      {
+        "key": "ctrl+k",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-k"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlK"
+      },
+      {
+        "key": "ctrl+l",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-l"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlL"
+      },
+      {
+        "key": "ctrl+q",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-q"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlQ"
+      },
+      {
+        "key": "ctrl+t",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-t"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlT"
+      },
+      {
+        "key": "ctrl+v",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-v"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlV"
+      },
+      {
+        "key": "ctrl+e",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-e"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlE"
+      },
+      {
+        "key": "ctrl+y",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-y"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlY"
+      },
+      {
+        "key": "ctrl+n",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-n"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlN"
+      },
+      {
+        "key": "ctrl+p",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-p"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlP"
+      },
+      {
+        "key": "ctrl+g",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-g"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlG"
+      },
+      {
+        "key": "ctrl+r",
+        "command": "helicode.key",
+        "args": {
+          "key": "C-r"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passCtrlR"
+      },
+      {
+        "key": "alt+.",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-."
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAlt"
+      },
+      {
+        "key": "alt+`",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-`"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAlt"
+      },
+      {
+        "key": "alt+d",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-d"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltD"
+      },
+      {
+        "key": "alt+c",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-c"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltC"
+      },
+      {
+        "key": "alt+shift+c",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-C"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltShiftC"
+      },
+      {
+        "key": "alt+s",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-s"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltS"
+      },
+      {
+        "key": "alt+-",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-minus"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAlt"
+      },
+      {
+        "key": "alt+shift+-",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-_"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltShift"
+      },
+      {
+        "key": "alt+;",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-;"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAlt"
+      },
+      {
+        "key": "alt+shift+;",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-:"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltShift"
+      },
+      {
+        "key": "alt+o",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-o"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltO"
+      },
+      {
+        "key": "alt+i",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-i"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltI"
+      },
+      {
+        "key": "alt+shift+i",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-I"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltShiftI"
+      },
+      {
+        "key": "alt+p",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-p"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltP"
+      },
+      {
+        "key": "alt+n",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-n"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltN"
+      },
+      {
+        "key": "alt+e",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-e"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltE"
+      },
+      {
+        "key": "alt+b",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-b"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltB"
+      },
+      {
+        "key": "alt+a",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-a"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltA"
+      },
+      {
+        "key": "alt+x",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-x"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltX"
+      },
+      {
+        "key": "alt+u",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-u"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltU"
+      },
+      {
+        "key": "alt+shift+u",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-U"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltShiftU"
+      },
+      {
+        "key": "alt+shift+j",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-J"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltShiftJ"
+      },
+      {
+        "key": "alt+shift+k",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-K"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltShiftK"
+      },
+      {
+        "key": "alt+,",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-,"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAlt"
+      },
+      {
+        "key": "alt+shift+9",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-("
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltShift9"
+      },
+      {
+        "key": "alt+shift+0",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-)"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltShift0"
+      },
+      {
+        "key": "alt+shift+\\",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-|"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltShift"
+      },
+      {
+        "key": "alt+shift+1",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-!"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltShift1"
+      },
+      {
+        "key": "alt+shift+8",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-*"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltShift8"
+      },
+      {
+        "key": "alt+k",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-k"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltK"
+      },
+      {
+        "key": "alt+j",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-j"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltJ"
+      },
+      {
+        "key": "alt+h",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-h"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltH"
+      },
+      {
+        "key": "alt+l",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-l"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltL"
+      },
+      {
+        "key": "alt+w",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-w"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltW"
+      },
+      {
+        "key": "alt+f",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-f"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltF"
+      },
+      {
+        "key": "alt+t",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-t"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltT"
+      },
+      {
+        "key": "alt+g",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-g"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltG"
+      },
+      {
+        "key": "alt+m",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-m"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltM"
+      },
+      {
+        "key": "alt+r",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-r"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltR"
+      },
+      {
+        "key": "alt+v",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-v"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltV"
+      },
+      {
+        "key": "alt+y",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-y"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltY"
+      },
+      {
+        "key": "alt+z",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-z"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltZ"
+      },
+      {
+        "key": "alt+q",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-q"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltQ"
+      },
+      {
+        "key": "alt+up",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-up"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltUp"
+      },
+      {
+        "key": "alt+down",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-down"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltDown"
+      },
+      {
+        "key": "alt+left",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-left"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltLeft"
+      },
+      {
+        "key": "alt+right",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-right"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltRight"
+      },
+      {
+        "key": "alt+home",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-home"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltHome"
+      },
+      {
+        "key": "alt+end",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-end"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltEnd"
+      },
+      {
+        "key": "alt+pageup",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-pageup"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltPageup"
+      },
+      {
+        "key": "alt+pagedown",
+        "command": "helicode.key",
+        "args": {
+          "key": "A-pagedown"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passAltPagedown"
+      },
+      {
+        "key": "tab",
+        "command": "helicode.key",
+        "args": {
+          "key": "tab"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passTab"
+      },
+      {
+        "key": "shift+tab",
+        "command": "helicode.key",
+        "args": {
+          "key": "S-tab"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passShiftTab"
+      },
+      {
+        "key": "backspace",
+        "command": "helicode.key",
+        "args": {
+          "key": "backspace"
+        },
+        "when": "helicode.infobox && inQuickOpen && !helicode.passBackspace"
       }
     ],
     "configuration": {
-      "title": "Helicode",
+      "title": "%config.title%",
       "properties": {
         "helicode.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable Helix keybindings."
+          "description": "%config.enabled.description%"
         },
         "helicode.search.smartCase": {
           "type": "boolean",
           "default": true,
-          "description": "Case-insensitive search unless the pattern contains an uppercase letter (Helix search.smart-case)."
+          "description": "%config.search.smartCase.description%"
         },
         "helicode.search.wrapAround": {
           "type": "boolean",
           "default": true,
-          "description": "Wrap around the document when searching (Helix search.wrap-around)."
+          "description": "%config.search.wrapAround.description%"
         },
         "helicode.scrolloff": {
           "type": "number",
           "default": 5,
-          "description": "Lines of context kept around the cursor when paging (Helix scrolloff)."
+          "description": "%config.scrolloff.description%"
         },
         "helicode.jumpLabelAlphabet": {
           "type": "string",
           "default": "abcdefghijklmnopqrstuvwxyz",
-          "description": "Characters used for `gw` jump labels (Helix jump-label-alphabet)."
+          "description": "%config.jumpLabelAlphabet.description%"
         },
         "helicode.defaultYankRegister": {
           "type": "string",
           "default": "\"",
-          "description": "Register used by yank/delete/paste when none is selected (Helix default-yank-register). Use \"+\" to yank to the system clipboard."
+          "description": "%config.defaultYankRegister.description%"
         },
         "helicode.textWidth": {
           "type": "number",
           "default": 80,
-          "description": "Default width for :reflow (Helix text-width)."
+          "description": "%config.textWidth.description%"
         },
         "helicode.shell": {
           "type": "array",
@@ -1198,32 +2922,32 @@
             "type": "string"
           },
           "default": [],
-          "description": "Shell command used for | ! $ and :sh, e.g. [\"zsh\", \"-c\"]. Defaults to $SHELL -c."
+          "description": "%config.shell.description%"
         },
         "helicode.openLineUsesEditorIndent": {
           "type": "boolean",
           "default": true,
-          "description": "After `o`/`O`, ask VS Code to re-indent the new line using language indentation rules."
+          "description": "%config.openLineUsesEditorIndent.description%"
         },
         "helicode.notebook.escapeQuitsCellEdit": {
           "type": "boolean",
           "default": true,
-          "description": "In notebook cells, Escape in normal mode (with nothing pending) leaves cell editing and focuses the cell list."
+          "description": "%config.notebook.escapeQuitsCellEdit.description%"
         },
         "helicode.treeSitter.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable tree-sitter (WASM) powered textobjects, bracket matching and syntax node selection."
+          "description": "%config.treeSitter.enabled.description%"
         },
         "helicode.treeSitter.maxFileSizeKB": {
           "type": "number",
           "default": 2048,
-          "description": "Documents larger than this are not parsed with tree-sitter."
+          "description": "%config.treeSitter.maxFileSizeKB.description%"
         },
         "helicode.treeSitter.extraGrammars": {
           "type": "object",
           "default": {},
-          "markdownDescription": "Additional grammars keyed by VS Code language id: `{ \"lua\": { \"wasm\": \"/path/tree-sitter-lua.wasm\", \"queries\": \"/path/queries\", \"language\": \"lua\" } }`. `queries` is a directory containing `<language>/textobjects.scm` (Helix layout).",
+          "markdownDescription": "%config.treeSitter.extraGrammars.description%",
           "additionalProperties": {
             "type": "object",
             "properties": {
@@ -1242,7 +2966,7 @@
         "helicode.keys": {
           "type": "object",
           "default": {},
-          "markdownDescription": "Keymap overrides in Helix `config.toml` style, keyed by mode: `{ \"normal\": { \"C-s\": \":w\", \"g\": { \"a\": \"code_action\" } }, \"insert\": { \"j\": { \"k\": \"normal_mode\" } } }`. Values are Helix command names, `:typed commands`, or arrays of commands.",
+          "markdownDescription": "%config.keys.description%",
           "properties": {
             "normal": {
               "type": "object"
@@ -1263,12 +2987,79 @@
             "below"
           ],
           "enumDescriptions": [
-            "Open the output beside the current editor without taking focus.",
-            "Open the output in the current editor group.",
-            "Split the current group down and open the output there."
+            "%config.shell.output.enum.beside%",
+            "%config.shell.output.enum.here%",
+            "%config.shell.output.enum.below%"
           ],
           "default": "beside",
-          "description": "Where `:sh` / `:run-shell-command` shows its output."
+          "description": "%config.shell.output.description%"
+        },
+        "helicode.undo": {
+          "type": "string",
+          "enum": [
+            "helix",
+            "vscode"
+          ],
+          "enumDescriptions": [
+            "%config.undo.enum.helix%",
+            "%config.undo.enum.vscode%"
+          ],
+          "default": "helix",
+          "description": "%config.undo.description%"
+        },
+        "helicode.autoInfo": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.autoInfo.description%"
+        },
+        "helicode.autoInfoDelay": {
+          "type": "number",
+          "default": 400,
+          "minimum": 0,
+          "description": "%config.autoInfoDelay.description%"
+        },
+        "helicode.passthroughKeys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "%config.passthroughKeys.description%"
+        },
+        "helicode.windowKeysEverywhere": {
+          "type": "string",
+          "enum": [
+            "all",
+            "editors-and-views",
+            "off"
+          ],
+          "enumDescriptions": [
+            "%config.windowKeysEverywhere.enum.all%",
+            "%config.windowKeysEverywhere.enum.editors-and-views%",
+            "%config.windowKeysEverywhere.enum.off%"
+          ],
+          "default": "all",
+          "markdownDescription": "%config.windowKeysEverywhere.description%"
+        },
+        "helicode.listNavigation": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.listNavigation.description%"
+        },
+        "helicode.importHelixConfig": {
+          "type": "string",
+          "enum": [
+            "ask",
+            "always",
+            "never"
+          ],
+          "enumDescriptions": [
+            "%config.importHelixConfig.enum.ask%",
+            "%config.importHelixConfig.enum.always%",
+            "%config.importHelixConfig.enum.never%"
+          ],
+          "default": "ask",
+          "markdownDescription": "%config.importHelixConfig.description%"
         }
       }
     }
@@ -1281,8 +3072,12 @@
     "test": "node scripts/build-tests.mjs && node --test \"out/test/**/*.cjs\"",
     "check-queries": "node scripts/check-queries.mjs",
     "test:integration": "npm run build && node scripts/run-integration.mjs",
-    "package": "npm run typecheck && npm run test && npm run build:prod && vsce package --no-dependencies",
-    "gen-keybindings": "node scripts/gen-keybindings.mjs"
+    "package": "npm run typecheck && npm run test && npm run build:prod && npm run check-web && vsce package --no-dependencies",
+    "gen-keybindings": "node scripts/gen-keybindings.mjs",
+    "fetch-grammars": "node scripts/fetch-grammars.mjs --all",
+    "gen-icon": "node scripts/gen-icon.mjs",
+    "publish": "npm run typecheck && npm run test && npm run build:prod && npm run check-web && vsce publish --no-dependencies",
+    "check-web": "node scripts/check-web-bundle.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.19.11",
@@ -1294,6 +3089,24 @@
   },
   "dependencies": {
     "@vscode/tree-sitter-wasm": "0.3.1",
+    "smol-toml": "^1.8.0",
     "web-tree-sitter": "^0.27.0"
+  },
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#1c1f2b",
+    "theme": "dark"
+  },
+  "homepage": "https://github.com/s-tatsuya/helicode#readme",
+  "bugs": {
+    "url": "https://github.com/s-tatsuya/helicode/issues"
+  },
+  "qna": "https://github.com/s-tatsuya/helicode/discussions",
+  "capabilities": {
+    "virtualWorkspaces": true,
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Shell commands (| ! $ :sh) and tree-sitter grammar downloads are disabled in untrusted workspaces."
+    }
   }
 }

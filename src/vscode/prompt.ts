@@ -1,10 +1,71 @@
 /**
  * Prompts: Helix-style incremental regex prompt (search / select / split /
- * keep / remove) and a plain input prompt, built on VS Code's InputBox.
+ * keep / remove) and a plain input prompt, built on VS Code's QuickPick.
+ *
+ * All prompts (including the `:` command line) support Helix's `Ctrl-r <reg>`
+ * to insert a register: the keybinding sets `helicode.promptOpen`, the
+ * `helicode.promptKey` command arms the next typed character as the register
+ * name.
  */
 import * as vscode from 'vscode';
 import { buildRegex } from '../core/search';
 import { CommandContext } from '../engine/types';
+import { Engine } from '../engine/engine';
+
+/** The prompt currently shown, if any (for `helicode.promptKey`). */
+let activePrompt: { awaitRegister(): void } | undefined;
+
+export function promptKey(key: string): void {
+  if (key === 'C-r') activePrompt?.awaitRegister();
+}
+
+/**
+ * Wire a QuickPick as a Helicode prompt: registers it as the active prompt,
+ * sets the `helicode.promptOpen` context and implements `Ctrl-r <register>`.
+ * Returns a function that must be called from `onDidChangeValue` first; it
+ * returns true when the change was consumed (register name typed).
+ */
+export function attachPrompt(qp: vscode.QuickPick<vscode.QuickPickItem>, engine: Engine): (value: string) => boolean {
+  let awaiting = false;
+  let before = '';
+  let placeholder: string | undefined;
+  const me = {
+    awaitRegister() {
+      if (awaiting) return;
+      awaiting = true;
+      before = qp.value;
+      placeholder = qp.placeholder;
+      qp.placeholder = 'register? (" a-z + * / : @ . % #)';
+    },
+  };
+  activePrompt = me;
+  void vscode.commands.executeCommand('setContext', 'helicode.promptOpen', true);
+  qp.onDidHide(() => {
+    if (activePrompt === me) activePrompt = undefined;
+    void vscode.commands.executeCommand('setContext', 'helicode.promptOpen', false);
+  });
+  return (value: string): boolean => {
+    if (!awaiting) return false;
+    awaiting = false;
+    qp.placeholder = placeholder;
+    // The typed register name is the character that was added to the old value.
+    let name: string | undefined;
+    if (value.length === before.length + 1) {
+      let i = 0;
+      while (i < before.length && before[i] === value[i]) i++;
+      name = value[i];
+    }
+    if (!name) {
+      qp.value = before;
+      return true;
+    }
+    void engine.registers.read(name).then((values) => {
+      const content = values?.[0] ?? '';
+      qp.value = before + content;
+    });
+    return true;
+  };
+}
 
 export interface RegexPromptOptions {
   prompt: string;
@@ -19,9 +80,8 @@ export interface RegexPromptOptions {
 
 /**
  * Opens an input box that behaves like Helix's regex prompt: live preview on
- * change, Enter validates, Escape restores. Up/Down cycle history via the
- * quick pick history list (VS Code has no up/down hook for InputBox, so the
- * history is offered as completions with a QuickPick when the prompt is empty).
+ * change, Enter validates, Escape restores. Up/Down move through the history
+ * offered as completions.
  */
 export function regexPrompt(cx: CommandContext, opts: RegexPromptOptions): Promise<void> {
   const smartCase = cx.engine.config.smartCase;
@@ -34,8 +94,8 @@ export function regexPrompt(cx: CommandContext, opts: RegexPromptOptions): Promi
     qp.ignoreFocusOut = false;
     qp.items = history.slice(0, 50).map((h) => ({ label: h, value: h, description: 'history' }));
     qp.value = opts.initial ?? '';
+    const consumeRegister = attachPrompt(qp, cx.engine);
     let accepted = false;
-    let lastValue = qp.value;
 
     const compile = (v: string): RegExp | undefined => {
       if (!v) return undefined;
@@ -47,7 +107,7 @@ export function regexPrompt(cx: CommandContext, opts: RegexPromptOptions): Promi
     };
 
     qp.onDidChangeValue((v) => {
-      lastValue = v;
+      if (consumeRegister(v)) return;
       // Keep history visible but do not filter it into the way of typing.
       qp.items = history.filter((h) => h.includes(v)).slice(0, 50).map((h) => ({ label: h, value: h, description: 'history' }));
       opts.onUpdate?.(compile(v), v);
@@ -85,7 +145,6 @@ export function regexPrompt(cx: CommandContext, opts: RegexPromptOptions): Promi
       qp.dispose();
     });
     if (opts.initial) opts.onUpdate?.(compile(opts.initial), opts.initial);
-    void lastValue;
     qp.show();
   });
 }
@@ -106,8 +165,10 @@ export function inputPrompt(cx: CommandContext, opts: InputPromptOptions): Promi
     qp.placeholder = opts.placeholder ?? opts.prompt;
     qp.value = opts.value ?? '';
     qp.items = history.slice(0, 50).map((h) => ({ label: h, value: h, description: 'history' }));
+    const consumeRegister = attachPrompt(qp, cx.engine);
     let accepted = false;
     qp.onDidChangeValue((v) => {
+      if (consumeRegister(v)) return;
       qp.items = history.filter((h) => h.includes(v)).slice(0, 50).map((h) => ({ label: h, value: h, description: 'history' }));
     });
     qp.onDidAccept(async () => {

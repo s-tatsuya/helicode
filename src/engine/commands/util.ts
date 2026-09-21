@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { CommandContext } from '../types';
 import { Range, Selection, transform, lineRange, from, to, direction, Direction, cursor as rangeCursor } from '../../core/range';
 import { Key, keyChar } from '../../core/keys';
+import type { KeyEntry } from '../engine';
 import { TextDoc } from '../../core/text';
 
 /** Apply `f` to every range and set the result as the selection. */
@@ -33,9 +34,12 @@ export function selectionIsLinewise(doc: TextDoc, sel: Selection): boolean {
   });
 }
 
-/** Wait for the next key and resolve with it (Esc resolves undefined). */
-export function nextKey(cx: CommandContext, hint?: string): Promise<Key | undefined> {
-  if (hint) cx.engine.setNextKeyHint(hint);
+/**
+ * Wait for the next key and resolve with it (Esc resolves undefined).
+ * `entries` are the choices shown in the which-key infobox while waiting.
+ */
+export function nextKey(cx: CommandContext, hint?: string, entries?: KeyEntry[]): Promise<Key | undefined> {
+  if (hint) cx.engine.setNextKeyHint(hint, entries);
   return new Promise((resolve) => {
     cx.onNextKey((k) => {
       resolve(k.code === 'esc' && !k.ctrl && !k.alt ? undefined : k);
@@ -44,8 +48,8 @@ export function nextKey(cx: CommandContext, hint?: string): Promise<Key | undefi
 }
 
 /** Next key as a character; `ret` maps to the document EOL, `tab` to "\t". */
-export async function nextChar(cx: CommandContext, hint?: string): Promise<string | undefined> {
-  const k = await nextKey(cx, hint);
+export async function nextChar(cx: CommandContext, hint?: string, entries?: KeyEntry[]): Promise<string | undefined> {
+  const k = await nextKey(cx, hint, entries);
   if (!k) return undefined;
   if (k.code === 'ret' && !k.ctrl && !k.alt) return cx.doc.eol;
   return keyChar(k);

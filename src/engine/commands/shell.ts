@@ -2,8 +2,8 @@
  * Shell commands: | Alt-| ! Alt-! $ and the :pipe/:insert-output/:sh family.
  */
 import * as vscode from 'vscode';
-import { spawn } from 'node:child_process';
 import { CommandContext, CommandFn } from '../types';
+import { isWeb, platform, env } from '../../platform';
 import { Range, range as mkRange, from, to, direction, withDirection, selection as mkSelection, fragment } from '../../core/range';
 import { Change } from '../../core/changes';
 import { inputPrompt } from '../../vscode/prompt';
@@ -18,15 +18,22 @@ export interface ShellResult {
 export function shellCommandLine(cx: CommandContext): string[] {
   const configured = cx.engine.config.shell;
   if (configured && configured.length) return configured;
-  if (process.platform === 'win32') return ['powershell', '-NoProfile', '-Command'];
-  return [process.env.SHELL || '/bin/sh', '-c'];
+  if (platform === 'win32') return ['powershell', '-NoProfile', '-Command'];
+  return [env('SHELL') || '/bin/sh', '-c'];
 }
 
-export function runShell(cx: CommandContext, command: string, input: string | undefined): Promise<ShellResult> {
+/** `node:child_process`, loaded lazily so the module also bundles for the web extension host. */
+async function childProcess(): Promise<typeof import('node:child_process')> {
+  if (isWeb) throw new Error('shell commands are not available in the web extension host');
+  return import('node:child_process');
+}
+
+export async function runShell(cx: CommandContext, command: string, input: string | undefined): Promise<ShellResult> {
   const [prog, ...args] = shellCommandLine(cx);
-  const cwd = vscode.workspace.getWorkspaceFolder(cx.vs.document.uri)?.uri.fsPath ?? vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd();
+  const cwd = vscode.workspace.getWorkspaceFolder(cx.vs.document.uri)?.uri.fsPath ?? vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? env('PWD') ?? undefined;
+  const { spawn } = await childProcess();
   return new Promise((resolve, reject) => {
-    const child = spawn(prog, [...args, command], { cwd, env: process.env, stdio: ['pipe', 'pipe', 'pipe'] });
+    const child = spawn(prog, [...args, command], { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
     let stdout = '';
     let stderr = '';
     child.stdout.setEncoding('utf8');

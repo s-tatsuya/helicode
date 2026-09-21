@@ -7,6 +7,7 @@ should feel familiar: function names and semantics are kept wherever possible.
 
 ```
 src/
+  platform.ts    host detection (Node extension host vs. web worker)
   core/        pure TypeScript, no VS Code dependency (unit tested)
     text.ts        TextDoc interface, char categories, graphemes, visual columns
     range.ts       Range / Selection (anchor, head, cursor, put_cursor, invariants)
@@ -20,10 +21,14 @@ src/
     increment.ts   number/date increment
     keys.ts        Helix key notation
     registers.ts   registers
+    history.ts     Helix edit history (revisions, undo/redo, earlier/later)
+    diff.ts        Myers line diff and hunk navigation (helix-vcs)
+    paths.ts       path helpers (no node:path, works in the web host)
   engine/
     keymap.ts      key trie, user overrides
     defaults.ts    default keymap (default.rs transcribed)
     engine.ts      modes, key dispatch, macros, jumplist, command registry
+    history.ts     groups document changes into Helix revisions per command
     editor-state.ts per-editor selection sync with VS Code, insert-mode anchors, decorations
     commands/      the commands, grouped like helix-term/src/commands
   vscode/
@@ -31,6 +36,10 @@ src/
     prompt.ts      regex/input prompts (QuickPick based)
     cmdline.ts     `:` commands
     labels.ts      gw jump labels
+    infobox.ts     which-key popup for minor modes and key prompts
+    registers.ts   register list / picker
+    git.ts         diff base (HEAD) through the built-in Git extension
+    helix-config.ts import of a Helix config.toml
     statusbar.ts
   treesitter/
     index.ts       web-tree-sitter loader, incremental parsing, Syntax helper
@@ -102,14 +111,44 @@ call, then set the computed post-edit selection. `changeBySelection` mirrors
 Helix's running-offset computation so multi-selection edits land exactly where
 Helix would put them.
 
-Undo relies on VS Code's undo stack. Edits that enter insert mode disable the
-trailing undo stop so the following typing merges into the same step when
-VS Code allows it.
+## Undo history
+
+VS Code's own undo stack groups typing by word, which does not match Helix,
+where one command and one insert session are one step each. `core/history.ts`
+therefore keeps a Helix-style `History` per document: a list of revisions, each
+holding the forward change, its inverse, the selection before and after, and a
+timestamp.
+
+`engine/history.ts` decides where revisions begin and end. `Engine.execute`
+opens a transaction around every command (so the keys a command waits for, a
+macro replay and a `.` repeat all land in one revision) and closes it when the
+command returns; entering insert mode keeps the transaction open until `Esc`
+or `Ctrl-s`. Document changes that arrive outside any command (a formatter,
+another extension) become a revision of their own.
+
+`u` / `U` apply a revision's inverse / forward change with a single
+`editor.edit` and restore the recorded selection. `Alt-u`, `Alt-U`,
+`:earlier` and `:later` walk the timestamps, which is what makes
+`:earlier 10s` possible. If Helicode ever loses track of a document (a change
+it did not observe), the history is dropped and `u` falls back to VS Code's
+`undo`, so the worst case is the old behaviour. `helicode.undo: vscode`
+selects that behaviour permanently.
+
+## Git hunks
+
+`vscode/git.ts` asks the built-in Git extension for the file's content at
+`HEAD` (cached per commit for a few seconds) and `core/diff.ts` computes line
+hunks with a Myers diff, mirroring `helix-vcs`. `]g`, `[g`, `]G`, `[G` and the
+`mig` / `mag` textobject work on those hunks; without a git repository they
+fall back to VS Code's dirty-diff navigation.
 
 ## Tree-sitter
 
-`web-tree-sitter` (WASM) is loaded from `wasm/web-tree-sitter.wasm`; grammars
-come from `@vscode/tree-sitter-wasm` (compiled with a matching ABI). Trees are
+`web-tree-sitter` (WASM) is loaded from `wasm/web-tree-sitter.wasm` through
+`vscode.workspace.fs`, so it also works remotely and in the web host; grammars
+come from `@vscode/tree-sitter-wasm` and from the upstream releases pinned in
+`grammars.json`, optionally downloaded at runtime into the extension's global
+storage (`:tree-sitter-install`). Trees are
 parsed lazily on first use and kept up to date incrementally via `tree.edit`
 from document change events. `Syntax` ports `match_brackets.rs` (fuzzy bracket
 matching), `textobject_treesitter`, `goto_treesitter_object` and `object.rs`
@@ -122,3 +161,24 @@ the bundled grammar at build time (`npm run check-queries`).
 Notebook cells are ordinary text editors, so the whole engine works inside a
 cell. The cell list receives a separate set of keybindings (see
 `notebooks-and-webviews.md`).
+
+## Keybindings and contexts
+
+`scripts/gen-keybindings.mjs` writes `contributes.keybindings`. It emits three
+groups: the Helix keymap itself (guarded by `editorTextFocus && helicode.active`
+and the mode), `Ctrl-w` window mode as a VS Code *chord* for terminals, lists,
+views and webviews (chords are resolved before a key reaches a terminal, which
+is what makes this work), and context-specific tables for the notebook cell
+list, Helicode prompts (`Ctrl-r`) and the which-key infobox.
+
+Every binding also carries `!helicode.pass<Key>`. `helicode.passthroughKeys`
+sets those context keys at activation, so any key can be handed back to VS Code
+without editing `keybindings.json`.
+
+## Hosts
+
+`src/platform.ts` is the only place that looks at `process`. The rest of the
+extension uses `vscode.workspace.fs` and `src/core/paths.ts`, so the same
+source builds for the Node extension host (`dist/extension.js`) and the web
+extension host (`dist/extension-web.js`). Shell commands import
+`node:child_process` lazily and refuse to run in the web host.

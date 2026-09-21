@@ -13,20 +13,41 @@ into VS Code commands:
 - **Jump labels.** `gw` shows two-letter labels on every visible word.
 - **Tree-sitter (WASM).** `mi f` / `ma f` / `mi c` / `]f` / `[t` / `Alt-o` /
   `Alt-i` / `Alt-n` / `Alt-p` / `mm` use real syntax trees via `web-tree-sitter`,
-  with the same `textobjects.scm` queries as Helix.
+  with the same `textobjects.scm` queries as Helix. 27 grammars are bundled
+  (TypeScript, Python, Rust, Go, HTML, JSON, YAML, TOML, Markdown, ...) and
+  `:tree-sitter-install kotlin` fetches more on demand.
 - **`:` commands.** `:w`, `:q`, `:wq`, `:x`, `:e`, `:bc`, `:sort`, `:reflow`,
   `:pipe`, `:sh`, `:set`, `:theme`, `:goto` and 80+ more, with completion and
   history in a VSCodeVim-like prompt.
 - **Counts, registers, macros.** `3w`, `"ay`, `"+p`, `Q`/`q`, `.` (repeat last
   insert), `Alt-.` (repeat last motion), jumplist (`Ctrl-o`/`Ctrl-i`/`Ctrl-s`).
+  `"` lists the registers, `:registers` shows their contents, and `Ctrl-r`
+  inserts one inside any prompt.
+- **Helix undo history.** One revision per command and per insert session, not
+  per typed word, plus time travel: `Alt-u`, `:earlier 10s`, `:later 1m30s`.
+- **Git hunks.** `]g`/`[g`/`]G`/`[G` and the `mig`/`mag` textobject work on the
+  real diff against `HEAD` through VS Code's built-in Git extension.
+- **Which-key popup.** Minor modes and key prompts list what you can press
+  next, like Helix's `auto-info` (`helicode.autoInfo`).
+- **One keymap for the whole window.** `Ctrl-w` window mode also works in
+  terminals, lists, views and webviews, and VS Code lists get `j`/`k`/`gg`/`G`
+  navigation (`helicode.windowKeysEverywhere`, `helicode.listNavigation`).
+- **Your Helix config.** `:config-import` reads `~/.config/helix/config.toml`
+  (or `.helix/config.toml` in the workspace) and applies its `[keys.*]` tables
+  and the `[editor]` options that have a VS Code equivalent.
 - **Notebooks.** Cell editors use the full Helix model; the cell list gets
   Helix-style navigation (`j`/`k`/`gg`/`G`/`o`/`O`/`dd`/`yy`/`p`/`u`).
-- **Corral integration.** With the [Corral](https://github.com/s-tatsuya/corral)
-  extension installed, `Ctrl-w` window mode gains `c` (terminal), `S`/`V`
-  (split with a shell), `a`/`A`/`i`/`e` (agents), `m`/`D` (review comments),
-  `d`/`]`/`[` (agent changes), `P` (popup), `;` (last pane), `W` (worktree);
-  `:corral <cmd>` runs the Corral CLI and `:popup <cmd>` inserts a popup's
-  output. Without Corral these keys only show a status message.
+- **Web and remote.** Runs in the desktop app, over SSH / Dev Containers / WSL,
+  and in the web extension host (vscode.dev, github.dev) - everything except
+  the shell commands, which need a real process.
+- **Corral integration.** `Ctrl-w` window mode carries the same letters as
+  [Corral](https://github.com/s-tatsuya/corral)'s `ctrl+b` prefix table, so one
+  keymap drives editors, terminal panes and agents: `c` terminal, `S`/`V` shell
+  splits, `z`/`x`/`=`/`1`-`8`/`;` panes, `a`/`A`/`i`/`e` agents, `m`/`D`/`d`
+  review, `P`/`g` popups, `r`/`R` layouts, `W` worktree. `Space t` opens the
+  same set as a menu, `:corral <cmd>` runs the Corral CLI and `:popup <cmd>`
+  inserts a popup's output. Without Corral the pane keys fall back to the
+  built-in VS Code commands and the agent keys show a status message.
 - **Any VS Code command from Helix keys.** `:vscode-command` / `:vsc <id> [json args]`
   runs a VS Code command and can be bound in `helicode.keys`, e.g. to reach
   [Corral](https://github.com/s-tatsuya/corral) pane commands from `Ctrl-w`:
@@ -35,7 +56,15 @@ into VS Code commands:
 See [docs/keymap.md](docs/keymap.md) for the complete coverage matrix and
 [docs/commands.md](docs/commands.md) for `:` commands.
 
-## Install (local build)
+## Install
+
+From the Marketplace (or Open VSX): search for **Helicode**, or
+
+```sh
+code --install-extension s-tatsuya.helicode
+```
+
+### Local build
 
 The development environment is fully managed with Nix; nothing is installed
 globally.
@@ -47,6 +76,10 @@ npm ci
 npm run package             # typecheck + tests + production build + helicode-*.vsix
 code --install-extension helicode-0.1.0.vsix
 ```
+
+The build downloads the tree-sitter grammars listed in `grammars.json` on its
+first run (`npm run fetch-grammars -- --all` also fetches the optional ones);
+afterwards it works offline.
 
 For development, open the folder in VS Code and press F5 (Run Extension). The
 `npm run watch` task rebuilds `dist/extension.js` on change.
@@ -94,6 +127,13 @@ Every push is also built on Windows, macOS and Linux by GitHub Actions
 | `helicode.treeSitter.maxFileSizeKB` | `2048` | Skip parsing larger files |
 | `helicode.treeSitter.extraGrammars` | `{}` | Add your own grammar `.wasm` files |
 | `helicode.keys` | `{}` | Keymap overrides in Helix `config.toml` style |
+| `helicode.undo` | `helix` | `helix` (one step per command / insert session, time travel) or `vscode` |
+| `helicode.autoInfo` | `true` | Which-key popup for minor modes and key prompts |
+| `helicode.autoInfoDelay` | `400` | Delay before that popup appears (ms) |
+| `helicode.passthroughKeys` | `[]` | Keys Helicode must not intercept, e.g. `["ctrl+f"]` |
+| `helicode.windowKeysEverywhere` | `all` | `Ctrl-w` window mode outside editors: `all` (incl. terminals), `editors-and-views`, `off` |
+| `helicode.listNavigation` | `true` | `j`/`k`/`gg`/`G` in VS Code lists and trees |
+| `helicode.importHelixConfig` | `ask` | Import an existing Helix `config.toml` |
 
 Keymap overrides use Helix's own notation and command names:
 
@@ -108,6 +148,22 @@ Keymap overrides use Helix's own notation and command names:
 }
 ```
 
+## Using your Helix configuration
+
+`:config-import` (or the `Helicode: Import Helix config.toml` command) reads
+the first config it finds in `.helix/config.toml`, `$XDG_CONFIG_HOME/helix` or
+`~/.config/helix` and applies it:
+
+- `[keys.normal]`, `[keys.select]` and `[keys.insert]` become `helicode.keys`
+  entries, with your existing entries winning over the imported ones;
+- the `[editor]` options that have a VS Code equivalent (`scrolloff`,
+  `text-width`, `line-number`, `cursorline`, `auto-pairs`, `auto-format`,
+  `rulers`, `shell`, `default-yank-register`, `auto-info`, ...) are written to
+  the matching settings.
+
+On the first start Helicode offers this once; `helicode.importHelixConfig`
+controls that (`ask`, `always`, `never`).
+
 ## Documentation
 
 - [docs/keymap.md](docs/keymap.md) - every Helix key and whether it is supported
@@ -118,9 +174,12 @@ Keymap overrides use Helix's own notation and command names:
   the Markdown preview and the limits of WYSIWYG webview editors
 - [docs/tree-sitter.md](docs/tree-sitter.md) - bundled grammars and how to add more
 - [docs/development.md](docs/development.md) - Nix workflow, tests, packaging
+- [README.ja.md](README.ja.md) - 日本語版の README (`:tutor ja` で日本語チュートリアル)
 
 ## License
 
 MIT. Tree-sitter queries under `queries/` are from the Helix editor (MPL-2.0),
 grammar WASM binaries come from `@vscode/tree-sitter-wasm` (MIT, individual
-grammar licenses in `node_modules/@vscode/tree-sitter-wasm/cgmanifest.json`).
+grammar licenses in `node_modules/@vscode/tree-sitter-wasm/cgmanifest.json`)
+and from the upstream grammar releases listed in `grammars.json`, which records
+each grammar's source and license.

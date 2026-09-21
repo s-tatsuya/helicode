@@ -4,15 +4,19 @@
  * text, arrow keys pick a completion).
  */
 import * as vscode from 'vscode';
-import * as path from 'node:path';
 import { CommandContext } from '../engine/types';
 import { Engine } from '../engine/engine';
 import { from, to, fragment, primary, cursor as rangeCursor, selection as mkSelection, range as mkRange, lineRange } from '../core/range';
 import { gotoLineWithoutJumplist } from '../engine/commands/movement';
-import { pasteImpl } from '../engine/commands/changes';
+import { pasteImpl, historyTravel } from '../engine/commands/changes';
+import { parseUndoKind } from '../core/history';
 import { shellImpl, ShellBehavior, runShell, insertOutputAtSelections } from '../engine/commands/shell';
 import { corralCli } from '../engine/commands/corral';
-import { getSyntax, showLog, bundledGrammars, supportsLanguage } from '../treesitter';
+import { getSyntax, showLog, bundledGrammars, installedGrammars, optionalGrammars, installGrammar, uninstallGrammar, installableGrammarFor, supportsLanguage, GRAMMARS } from '../treesitter';
+import { isAbsolutePath, joinPath, expandHome } from '../core/paths';
+import { readHelixConfig, importHelixConfig } from './helix-config';
+import { showRegisters, pickRegister } from './registers';
+import { homeDir, env, isWeb } from '../platform';
 import { vsCommand, vsCommandAndSync, exitSelectMode } from '../engine/commands/util';
 import { Change } from '../core/changes';
 import { lineEnd } from '../core/text';
@@ -24,7 +28,7 @@ export interface TypedCommand {
   /** args: already split; bang: trailing `!` on the command name */
   run: (cx: CommandContext, args: string[], bang: boolean, raw: string) => Promise<void> | void;
   /** Completion kind for the first argument. */
-  completer?: 'file' | 'theme' | 'language' | 'option' | 'none';
+  completer?: 'file' | 'theme' | 'language' | 'option' | 'grammar' | 'register' | 'command' | 'none';
 }
 
 const commands: TypedCommand[] = [];
@@ -50,7 +54,7 @@ async function writeDoc(cx: CommandContext, pathArg: string | undefined, force: 
   if (pathArg) {
     const target = resolveUserPath(pathArg, doc.uri);
     if (force) await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(target, '..'));
-    const bytes = Buffer.from(doc.getText(), 'utf8');
+    const bytes = encodeUtf8(doc.getText());
     await vscode.workspace.fs.writeFile(target, bytes);
     if (doc.isUntitled || doc.uri.toString() !== target.toString()) {
       // Reopen under the new path (VS Code's "save as" semantics).
@@ -72,11 +76,23 @@ async function writeDoc(cx: CommandContext, pathArg: string | undefined, force: 
 }
 
 function resolveUserPath(p: string, relativeTo: vscode.Uri): vscode.Uri {
-  if (p.startsWith('~/')) p = path.join(process.env.HOME ?? '', p.slice(2));
-  if (path.isAbsolute(p)) return vscode.Uri.file(p);
+  p = expandHome(p, homeDir());
+  if (isAbsolutePath(p)) return vscode.Uri.file(p);
   const folder = vscode.workspace.getWorkspaceFolder(relativeTo) ?? vscode.workspace.workspaceFolders?.[0];
-  if (relativeTo.scheme === 'file' && !folder) return vscode.Uri.file(path.resolve(path.dirname(relativeTo.fsPath), p));
-  return folder ? vscode.Uri.joinPath(folder.uri, p) : vscode.Uri.file(path.resolve(p));
+  // Relative paths resolve against the workspace folder, like Helix's cwd.
+  if (folder) return vscode.Uri.joinPath(folder.uri, p);
+  if (relativeTo.scheme !== 'untitled') return vscode.Uri.joinPath(relativeTo, '..', p);
+  return vscode.Uri.file(joinPath(env('PWD') ?? '.', p));
+}
+
+const utf8 = new TextDecoder();
+
+function decodeUtf8(bytes: Uint8Array): string {
+  return utf8.decode(bytes);
+}
+
+function encodeUtf8(text: string): Uint8Array {
+  return new TextEncoder().encode(text);
 }
 
 async function closeEditor(force: boolean): Promise<void> {
@@ -164,13 +180,21 @@ def('line-ending', [], "Set the document's default line ending. Options: crlf, l
   }
   await cx.vs.edit((eb) => eb.setEndOfLine(a === 'lf' ? vscode.EndOfLine.LF : vscode.EndOfLine.CRLF));
 });
-def('earlier', ['ear'], 'Jump back to an earlier point in edit history. Accepts a number of steps.', async (_cx, args) => {
-  const n = Math.max(1, Number(args[0]) || 1);
-  for (let i = 0; i < n; i++) await vsCommand('undo');
+def('earlier', ['ear'], 'Jump back to an earlier point in edit history. Accepts a number of steps or a time span (:earlier 10s, :earlier 1m30s).', async (cx, args) => {
+  const kind = parseUndoKind(args.join(' '));
+  if (!kind) {
+    cx.setError(`invalid argument: ${args.join(' ')} (use a step count or a duration like 10s, 2m, 1h)`);
+    return;
+  }
+  await historyTravel(cx, 'earlier', kind);
 });
-def('later', ['lat'], 'Jump to a later point in edit history. Accepts a number of steps.', async (_cx, args) => {
-  const n = Math.max(1, Number(args[0]) || 1);
-  for (let i = 0; i < n; i++) await vsCommand('redo');
+def('later', ['lat'], 'Jump to a later point in edit history. Accepts a number of steps or a time span.', async (cx, args) => {
+  const kind = parseUndoKind(args.join(' '));
+  if (!kind) {
+    cx.setError(`invalid argument: ${args.join(' ')} (use a step count or a duration like 10s, 2m, 1h)`);
+    return;
+  }
+  await historyTravel(cx, 'later', kind);
 });
 def('write-quit', ['wq', 'x', 'xit', 'exit'], 'Write changes to disk and close the current view.', async (cx, args, bang) => {
   if (await writeDoc(cx, args[0], bang)) await closeEditor(false);
@@ -253,7 +277,7 @@ def(
 );
 def('show-directory', ['pwd'], 'Show the current working directory.', (cx) => {
   const f = vscode.workspace.getWorkspaceFolder(cx.vs.document.uri) ?? vscode.workspace.workspaceFolders?.[0];
-  cx.setStatus(f ? f.uri.fsPath : process.cwd());
+  cx.setStatus(f ? f.uri.fsPath : (env('PWD') ?? '(no workspace folder)'));
 });
 def('encoding', [], 'Set encoding (opens the encoding picker).', () => vsCommand('workbench.action.editor.changeEncoding'));
 def('character-info', ['char'], 'Get info about the character under the primary cursor.', (cx) => {
@@ -266,11 +290,8 @@ def('character-info', ['char'], 'Get info about the character under the primary 
   }
   const chStr = String.fromCodePoint(cp);
   const hex = cp.toString(16).toUpperCase().padStart(4, '0');
-  const utf8 = Buffer.from(chStr, 'utf8')
-    .toString('hex')
-    .replace(/(..)/g, '$1 ')
-    .trim();
-  cx.setStatus(`"${chStr}" (U+${hex}) Dec ${cp} Hex ${hex} UTF-8: ${utf8}`);
+  const bytes = [...encodeUtf8(chStr)].map((b) => b.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+  cx.setStatus(`"${chStr}" (U+${hex}) Dec ${cp} Hex ${hex} UTF-8: ${bytes}`);
 });
 def('reload', ['rl'], 'Discard changes and reload from the source file.', () => vsCommand('workbench.action.files.revert'));
 def('reload-all', ['rla'], 'Discard changes and reload all documents from the source files.', () => vsCommand('workbench.action.files.revert'));
@@ -350,16 +371,30 @@ def(
   'file',
 );
 def('hsplit-new', ['hnew'], 'Open a scratch buffer in a horizontal split.', (cx) => cx.engine.execute('hsplit_new', { editor: cx.editor }));
-def('tutor', [], 'Open the tutorial.', async (cx) => {
-  const uri = vscode.Uri.joinPath(extensionUri!, 'docs', 'tutor.txt');
-  try {
-    const bytes = await vscode.workspace.fs.readFile(uri);
-    const doc = await vscode.workspace.openTextDocument({ content: Buffer.from(bytes).toString('utf8'), language: 'plaintext' });
-    await vscode.window.showTextDocument(doc);
-  } catch {
-    cx.setError('tutor file not found');
-  }
-});
+def(
+  'tutor',
+  [],
+  'Open the tutorial. Takes an optional language (`:tutor ja`); without one it follows the VS Code display language.',
+  async (cx, args) => {
+    const requested = args[0]?.toLowerCase();
+    const display = vscode.env.language.toLowerCase();
+    // `ja-jp` and `ja` both map to docs/tutor.ja.txt; anything unknown falls back to English.
+    const candidates = [requested, requested?.split('-')[0], display, display.split('-')[0]].filter((l): l is string => !!l && l !== 'en');
+    for (const lang of [...candidates, '']) {
+      const name = lang ? `tutor.${lang}.txt` : 'tutor.txt';
+      try {
+        const bytes = await vscode.workspace.fs.readFile(vscode.Uri.joinPath(extensionUri!, 'docs', name));
+        const doc = await vscode.workspace.openTextDocument({ content: decodeUtf8(bytes), language: 'plaintext' });
+        await vscode.window.showTextDocument(doc);
+        return;
+      } catch {
+        /* try the next candidate */
+      }
+    }
+    cx.setError(requested ? `no tutor for language '${requested}'` : 'tutor file not found');
+  },
+  'none',
+);
 def('goto', ['g'], 'Goto line number.', (cx, args) => {
   const n = Number(args[0]);
   if (!Number.isFinite(n)) {
@@ -436,6 +471,31 @@ def('config-reload', [], 'Refresh user config.', (cx) => {
   cx.engine.applyKeymapOverrides();
   cx.setStatus('config reloaded');
 });
+def(
+  'config-import',
+  ['import-helix-config'],
+  'Import a Helix config.toml ([keys.*] and the supported [editor] options). With no argument, looks in .helix/config.toml, $XDG_CONFIG_HOME/helix and ~/.config/helix.',
+  async (cx, args, bang) => {
+    try {
+      const config = await readHelixConfig(args[0]);
+      if (!config) {
+        cx.setError(args[0] ? `cannot read ${args[0]}` : 'no Helix config.toml found (looked in .helix/, $XDG_CONFIG_HOME/helix, ~/.config/helix)');
+        return;
+      }
+      const target = vscode.workspace.workspaceFolders?.length && bang ? vscode.ConfigurationTarget.Workspace : vscode.ConfigurationTarget.Global;
+      const res = await importHelixConfig(config, target, { keysOnly: false });
+      cx.engine.applyKeymapOverrides();
+      const parts = [`imported ${res.keyCount} bindings (${res.keyModes.join(', ') || 'no keys'})`];
+      if (res.options.length) parts.push(`${res.options.length} options`);
+      if (res.skipped.length) parts.push(`skipped: ${res.skipped.join(', ')}`);
+      cx.setStatus(`${vscode.workspace.asRelativePath(res.uri, false)}: ${parts.join('; ')}`);
+    } catch (e) {
+      cx.setError(`config import failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  },
+  'file',
+);
+def('registers', ['reg'], 'Show the contents of every register.', (cx) => showRegisters(cx));
 def('config-open', [], 'Open the user settings.json file.', () => vsCommand('workbench.action.openSettingsJson'));
 def('config-open-workspace', [], 'Open the workspace settings file.', () => vsCommand('workbench.action.openWorkspaceSettingsFile'));
 def('log-open', [], 'Open the Helicode log (output channel).', () => showLog());
@@ -498,6 +558,12 @@ def(
   },
 );
 def('reset-diff-change', ['diffget', 'diffg'], 'Reset the diff change at the cursor position.', () => vsCommand('git.revertSelectedRanges'));
+def('select-register', [], 'Pick a register from a list; the next yank/paste uses it.', async (cx) => {
+  const name = await pickRegister(cx.engine);
+  if (!name) return;
+  cx.engine.selectedRegister = name;
+  cx.setStatus(`register selected: ${name}`);
+}, 'register');
 def('clear-register', [], 'Clear given register. If no argument is provided, clear all registers.', (cx, args) => {
   cx.engine.registers.clear(args[0]);
   cx.setStatus(args[0] ? `Register ${args[0]} cleared` : 'All registers cleared');
@@ -555,7 +621,7 @@ def(
     }
     const uri = resolveUserPath(args[0], cx.vs.document.uri);
     const bytes = await vscode.workspace.fs.readFile(uri);
-    const content = Buffer.from(bytes).toString('utf8').replace(/\r\n|\n/g, cx.doc.eol);
+    const content = decodeUtf8(bytes).replace(/\r\n|\n/g, cx.doc.eol);
     await pasteImpl(cx, [content], 1 /* Paste.After */, 1);
   },
   'file',
@@ -571,7 +637,68 @@ def('show-directory-stack', [], 'Not supported in VS Code.', (cx) => cx.setError
 // Helicode extras
 def('helicode-toggle', [], 'Enable/disable Helicode key handling.', () => vsCommand('helicode.toggle'));
 def('keymap', [], 'Show the Helicode keymap reference.', () => vsCommand('helicode.showKeymapHelp'));
-def('tree-sitter-grammars', [], 'List bundled tree-sitter grammars.', (cx) => cx.setStatus('bundled grammars: ' + bundledGrammars().join(', ')));
+def('tree-sitter-grammars', [], 'List the tree-sitter grammars that are bundled, installed on demand, or available to install.', async (cx) => {
+  const [bundled, installed] = await Promise.all([bundledGrammars(), installedGrammars()]);
+  const available = optionalGrammars().filter((g) => !installed.includes(g));
+  const lines = [
+    `# tree-sitter grammars`,
+    ``,
+    `## Bundled (${bundled.length})`,
+    ``,
+    bundled.join(', ') || '(none)',
+    ``,
+    `## Installed on demand (${installed.length})`,
+    ``,
+    installed.join(', ') || '(none)',
+    ``,
+    `## Available with :tree-sitter-install (${available.length})`,
+    ``,
+    ...available.map((g) => `- ${g} - ${GRAMMARS[g]?.source ?? ''} (${GRAMMARS[g]?.license ?? '?'})`),
+  ];
+  const doc = await vscode.workspace.openTextDocument({ content: lines.join('\n'), language: 'markdown' });
+  await vscode.window.showTextDocument(doc, { preview: true, viewColumn: vscode.ViewColumn.Beside, preserveFocus: true });
+});
+def(
+  'tree-sitter-install',
+  ['ts-install'],
+  'Download an optional tree-sitter grammar (e.g. :tree-sitter-install kotlin). With no argument, installs the grammar for the current language.',
+  async (cx, args) => {
+    let name = args[0];
+    if (!name) {
+      name = installableGrammarFor(cx.vs.document.languageId) ?? '';
+      if (!name) {
+        cx.setError(`no installable grammar for ${cx.vs.document.languageId}; :tree-sitter-grammars lists what is available`);
+        return;
+      }
+    }
+    try {
+      await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `Helicode: installing ${name} grammar` }, () => installGrammar(name!));
+      cx.setStatus(`grammar ${name} installed`);
+    } catch (e) {
+      cx.setError(`install failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  },
+  'grammar',
+);
+def(
+  'tree-sitter-uninstall',
+  ['ts-uninstall'],
+  'Remove a grammar previously installed with :tree-sitter-install.',
+  async (cx, args) => {
+    const name = args[0];
+    if (!name) {
+      cx.setError('usage: :tree-sitter-uninstall <grammar>');
+      return;
+    }
+    try {
+      await uninstallGrammar(name);
+      cx.setStatus(`grammar ${name} removed`);
+    } catch (e) {
+      cx.setError(`uninstall failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  },
+  'grammar',
+);
 def('markdown-preview', ['preview'], 'Open the markdown preview to the side (VS Code built-in).', () => vsCommand('markdown.showPreviewToSide'));
 def(
   'vscode-command',
@@ -592,6 +719,7 @@ def(
     });
     await vsCommandAndSync(cx, id, ...parsed);
   },
+  'command',
 );
 
 // ---------------------------------------------------------------------------
@@ -622,6 +750,8 @@ const OPTION_MAP: Record<string, [string, string]> = {
   'completion-trigger-len': ['editor', 'quickSuggestions'],
   'inline-diagnostics': ['editor', 'inlayHints.enabled'],
   'lsp.display-inlay-hints': ['editor', 'inlayHints.enabled'],
+  'auto-info': ['helicode', 'autoInfo'],
+  undo: ['helicode', 'undo'],
   'insert-final-newline': ['files', 'insertFinalNewline'],
   'trim-trailing-whitespace': ['files', 'trimTrailingWhitespace'],
   'trim-final-newlines': ['files', 'trimFinalNewlines'],
@@ -928,6 +1058,27 @@ async function completeArgs(cmd: TypedCommand | undefined, value: string, cx: Co
       return Object.keys(OPTION_MAP)
         .filter((o) => o.startsWith(partial))
         .map((o) => ({ label: `:${prefix} ${o}`, value: `${prefix} ${o}` }));
+    case 'grammar': {
+      const installed = new Set(await installedGrammars());
+      return Object.keys(GRAMMARS)
+        .filter((g) => g.startsWith(partial))
+        .sort()
+        .map((g) => ({ label: `:${prefix} ${g}`, value: `${prefix} ${g}`, description: GRAMMARS[g].bundled ? 'bundled' : installed.has(g) ? 'installed' : GRAMMARS[g].source }));
+    }
+    case 'register': {
+      const names = cx.engine.registers.names();
+      return names
+        .filter((n) => n.startsWith(partial))
+        .map((n) => ({ label: `:${prefix} ${n}`, value: `${prefix} ${n}` }));
+    }
+    case 'command': {
+      const all = await vscode.commands.getCommands(true);
+      return all
+        .filter((c) => c.toLowerCase().includes(partial.toLowerCase()))
+        .sort()
+        .slice(0, 50)
+        .map((c) => ({ label: `:${prefix} ${c}`, value: `${prefix} ${c}` }));
+    }
     default:
       return [];
   }

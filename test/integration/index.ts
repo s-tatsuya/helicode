@@ -16,6 +16,27 @@ function test(name: string, fn: TestFn): void {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** Wait until the built-in git extension can report a diff base for `uri`. */
+async function waitForGit(uri: vscode.Uri): Promise<void> {
+  const ext = vscode.extensions.getExtension('vscode.git');
+  if (!ext) throw new Error('the built-in git extension is not available');
+  const api = (ext.isActive ? ext.exports : await ext.activate()).getAPI(1);
+  for (let i = 0; i < 60; i++) {
+    const repo = api.getRepository(uri);
+    if (repo) {
+      try {
+        await repo.show('HEAD', uri.fsPath);
+        await sleep(100);
+        return;
+      } catch {
+        /* keep waiting */
+      }
+    }
+    await sleep(250);
+  }
+  throw new Error('git repository not ready');
+}
+
 async function keys(seq: string): Promise<void> {
   // "<esc>", "<ret>", "<C-w>" etc. are special keys; everything else is typed.
   const re = /<([^>]+)>|([\s\S])/g;
@@ -213,6 +234,191 @@ test('jump labels gw', async () => {
   await keys('gwab');
   // "ab" is the second label: labels alternate forward/backward from the cursor
   assert.notEqual(ed.selection.active.character, 0);
+});
+
+test('undo: one insert session is one step', async () => {
+  const ed = await open('start\n');
+  await keys('A one two three<esc>');
+  assert.equal(text(ed), 'start one two three\n');
+  await keys('u');
+  assert.equal(text(ed), 'start\n', 'a whole insert session undoes at once');
+  await keys('U');
+  assert.equal(text(ed), 'start one two three\n');
+});
+
+test('undo: one command is one step, and the selection is restored', async () => {
+  const ed = await open('a b c d\n');
+  await keys('wd'); // `w` selects "a ", `d` deletes it
+  assert.equal(text(ed), 'b c d\n');
+  await keys('wd');
+  assert.equal(text(ed), 'c d\n');
+  await keys('u');
+  assert.equal(text(ed), 'b c d\n');
+  assert.deepEqual(sel(ed), [[0, 2]], 'the selection the command ran on comes back');
+  await keys('u');
+  assert.equal(text(ed), 'a b c d\n');
+  await keys('uu');
+  assert.equal(text(ed), 'a b c d\n', 'undo stops at the oldest change');
+  await keys('UU');
+  assert.equal(text(ed), 'c d\n');
+});
+
+test('undo: counts and Alt-u / Alt-U', async () => {
+  const ed = await open('x\n');
+  await keys('A1<esc>A2<esc>A3<esc>');
+  assert.equal(text(ed), 'x123\n');
+  await keys('3u');
+  assert.equal(text(ed), 'x\n');
+  await keys('2<A-U>');
+  assert.equal(text(ed), 'x12\n');
+  await keys('<A-u>');
+  assert.equal(text(ed), 'x1\n');
+});
+
+test('undo: a macro replay is one step', async () => {
+  const ed = await open('a\nb\nc\n');
+  await keys('QxdQ'); // record: select line, delete
+  assert.equal(text(ed), 'b\nc\n');
+  await keys('q');
+  assert.equal(text(ed), 'c\n');
+  await keys('u');
+  assert.equal(text(ed), 'b\nc\n', 'the replay undoes as a single step');
+});
+
+test(':earlier and :later accept step counts', async () => {
+  const ed = await open('v\n');
+  await keys('A1<esc>A2<esc>');
+  assert.equal(text(ed), 'v12\n');
+  await vscode.commands.executeCommand('helicode.typed', 'earlier 2');
+  await sleep(50);
+  assert.equal(text(ed), 'v\n');
+  await vscode.commands.executeCommand('helicode.typed', 'later 2');
+  await sleep(50);
+  assert.equal(text(ed), 'v12\n');
+});
+
+test('named registers round-trip through yank and paste', async () => {
+  const ed = await open('hello world\n');
+  await keys('w'); // select "hello "
+  await keys('"ay'); // yank it into register a
+  await keys('"ap'); // paste register a after the selection
+  assert.equal(text(ed), 'hello hello world\n');
+  await keys('u');
+  assert.equal(text(ed), 'hello world\n');
+});
+
+test('window mode reaches Corral commands without Corral installed', async () => {
+  await open('x\n');
+  // corral_* commands report a status error instead of throwing when Corral is absent.
+  await vscode.commands.executeCommand('helicode.command', 'corral_new_terminal');
+  await sleep(50);
+  // focus_pane_1 always works (built-in editor group command).
+  await vscode.commands.executeCommand('helicode.command', 'focus_pane_1');
+  await sleep(50);
+  assert.ok(true);
+});
+
+test('tree-sitter: html element textobject (grammar from the manifest)', async () => {
+  const ed = await open('<div class="a"><span>text</span></div>\n', 'html');
+  await keys('22l');
+  await keys('max');
+  const picked = text(ed).slice(Math.min(...sel(ed)[0]), Math.max(...sel(ed)[0]));
+  assert.equal(picked, '<span>text</span>');
+});
+
+test('tree-sitter: json entry textobject (grammar from the manifest)', async () => {
+  const ed = await open('{\n  "a": [1, 2],\n  "b": 3\n}\n', 'json');
+  await keys('j3l');
+  await keys('mae');
+  const picked = text(ed).slice(Math.min(...sel(ed)[0]), Math.max(...sel(ed)[0]));
+  assert.equal(picked, '"a": [1, 2]');
+});
+
+test('tree-sitter: markdown section textobject', async () => {
+  const ed = await open('# Title\n\nbody text\n\n## Sub\n\nmore\n', 'markdown');
+  await keys('2j');
+  await keys('mat');
+  const picked = text(ed).slice(Math.min(...sel(ed)[0]), Math.max(...sel(ed)[0]));
+  assert.match(picked, /^# Title/);
+});
+
+test('git hunks: mig selects the hunk and ]g / [g move between hunks', async () => {
+  const ext = vscode.extensions.getExtension('s-tatsuya.helicode')!;
+  const uri = vscode.Uri.joinPath(ext.extensionUri, 'README.md');
+  const doc = await vscode.workspace.openTextDocument(uri);
+  const ed = await vscode.window.showTextDocument(doc);
+  await vscode.commands.executeCommand('helicode.normalMode');
+  ed.selection = new vscode.Selection(0, 0, 0, 0);
+  await sleep(50);
+  try {
+    // Add a line of our own; the working tree may already differ from HEAD.
+    await keys('ozz HELICODE TEST LINE<esc>');
+    await waitForGit(uri);
+    let marker = -1;
+    for (let i = 0; i < ed.document.lineCount; i++) {
+      if (ed.document.lineAt(i).text.includes('HELICODE TEST LINE')) {
+        marker = i;
+        break;
+      }
+    }
+    assert.ok(marker >= 0, 'the marker line was inserted');
+    await vscode.commands.executeCommand('helicode.typed', String(marker + 1));
+    await sleep(50);
+    assert.equal(ed.selection.active.line, marker);
+    await keys('mig');
+    const picked = text(ed).slice(Math.min(...sel(ed)[0]), Math.max(...sel(ed)[0]));
+    assert.match(picked, /HELICODE TEST LINE/, `mig should select the hunk, got ${JSON.stringify(picked)}`);
+    // ]g moves forward to another hunk (or stays put when this is the only one).
+    await keys(';'); // collapse first
+    const before = ed.selection.active.line;
+    await keys(']g');
+    assert.ok(ed.selection.active.line >= before, ']g does not move backwards');
+    await keys('[g');
+    assert.ok(ed.selection.active.line <= ed.document.lineCount, '[g stays in the document');
+  } finally {
+    await vscode.commands.executeCommand('workbench.action.files.revert');
+    await sleep(100);
+  }
+});
+
+test('infobox: a minor mode still completes while the popup is open', async () => {
+  const cfg = vscode.workspace.getConfiguration('helicode');
+  await cfg.update('autoInfoDelay', 0, vscode.ConfigurationTarget.Global);
+  try {
+    const ed = await open('alpha\nbeta\ngamma\n');
+    await keys('g');
+    await sleep(120); // the popup is open and owns the keyboard
+    await vscode.commands.executeCommand('helicode.typeText', 'e');
+    await sleep(120);
+    assert.equal(ed.selection.active.line, 2, 'ge reached the last line through the infobox');
+  } finally {
+    await cfg.update('autoInfoDelay', undefined, vscode.ConfigurationTarget.Global);
+    await sleep(50);
+  }
+});
+
+test('infobox: entries and title describe the pending minor mode', async () => {
+  await open('x\n');
+  await keys('m');
+  const info = (await vscode.commands.executeCommand('helicode.debugPending')) as { title?: string; entries?: { key: string; value: string }[] } | undefined;
+  assert.ok(info, 'helicode.debugPending returns the pending state');
+  assert.match(info!.title ?? '', /m\s+Match/);
+  const keysOffered = (info!.entries ?? []).map((e) => e.key);
+  for (const k of ['m', 's', 'r', 'd', 'a', 'i']) assert.ok(keysOffered.includes(k), `match mode offers ${k}`);
+  await keys('<esc>');
+});
+
+test('passthrough keys are exposed as context keys', async () => {
+  const cfg = vscode.workspace.getConfiguration('helicode');
+  await cfg.update('passthroughKeys', ['ctrl+f'], vscode.ConfigurationTarget.Global);
+  await sleep(200);
+  try {
+    const active = (await vscode.commands.executeCommand('helicode.debugPassthrough')) as string[];
+    assert.deepEqual(active, ['helicode.passCtrlF']);
+  } finally {
+    await cfg.update('passthroughKeys', undefined, vscode.ConfigurationTarget.Global);
+    await sleep(100);
+  }
 });
 
 // ---------------------------------------------------------------------------

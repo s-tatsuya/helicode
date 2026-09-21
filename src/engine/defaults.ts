@@ -4,8 +4,18 @@
  */
 import { KeyTrieSpec, KeyTrieNode, buildTrie } from './keymap';
 
+/**
+ * Window mode (`Ctrl-w`, also `Space w`).
+ *
+ * Helix's own bindings come first; the remaining letters mirror Corral's tmux
+ * prefix table (`ctrl+b <key>`) so the same key does the same thing whether it
+ * is pressed after `Ctrl-w` here or after the Corral prefix anywhere else in
+ * VS Code. Corral keys degrade to the matching built-in VS Code command (or a
+ * status message) when Corral is not installed.
+ */
 const windowMode: KeyTrieSpec = {
   __name: 'Window',
+  // ---- Helix ----
   'C-w | w': 'rotate_view',
   'C-s | s': 'hsplit',
   'C-v | v': 'vsplit',
@@ -27,22 +37,40 @@ const windowMode: KeyTrieSpec = {
     'C-s | s': 'hsplit_new',
     'C-v | v': 'vsplit_new',
   },
-  // Corral pane/agent keys (same letters as Corral's prefix table); no-ops without Corral
+  // ---- Corral pane grid (same letters as the Corral prefix) ----
   c: 'corral_new_terminal',
   S: 'corral_split_down',
   V: 'corral_split_right',
+  z: 'corral_zoom_pane',
+  '=': 'corral_even_panes',
+  x: 'corral_close_pane',
+  1: 'focus_pane_1',
+  2: 'focus_pane_2',
+  3: 'focus_pane_3',
+  4: 'focus_pane_4',
+  5: 'focus_pane_5',
+  6: 'focus_pane_6',
+  7: 'focus_pane_7',
+  8: 'focus_pane_8',
+  ';': 'corral_focus_last_pane',
+  ',': 'corral_rename_terminal',
+  // ---- Corral agents / review / popups ----
   a: 'corral_pick_agent',
   A: 'corral_spawn_agent',
   i: 'corral_prompt_agent',
   e: 'corral_ask_agent',
+  E: 'corral_focus_view',
   m: 'corral_comment_here',
   D: 'corral_send_review',
   d: 'corral_review_changes',
   ']': 'corral_next_change',
   '[': 'corral_prev_change',
   P: 'corral_popup',
-  ';': 'corral_focus_last_pane',
+  g: 'corral_lazygit',
+  r: 'corral_apply_layout',
+  R: 'corral_save_layout',
   W: 'corral_new_worktree',
+  '?': 'corral_show_keymap',
 };
 
 const viewMode: KeyTrieSpec = {

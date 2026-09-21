@@ -4,7 +4,10 @@
  */
 import * as vscode from 'vscode';
 import { CommandContext, CommandFn } from '../types';
-import { Range, range as mkRange, putCursor, cursor as rangeCursor, primary, Direction, selection as mkSelection } from '../../core/range';
+import { Range, range as mkRange, putCursor, cursor as rangeCursor, primary, Direction, selection as mkSelection, withDirection, cursorLine } from '../../core/range';
+import { Hunk, nextHunk, prevHunk, hunkAt } from '../../core/diff';
+import { documentHunks } from '../../vscode/git';
+import { TextDoc } from '../../core/text';
 import { getSyntax } from '../../treesitter';
 import { transformSelection, vsCommandAndSync } from './util';
 
@@ -46,19 +49,72 @@ export const gotoFirstDiag: CommandFn = (cx) => gotoDiag(cx, 'first');
 export const gotoLastDiag: CommandFn = (cx) => gotoDiag(cx, 'last');
 
 // ---------------------------------------------------------------------------
-// VCS changes (delegated to VS Code's dirty diff)
+// VCS changes (helix-term commands.rs goto_next_change_impl over git HEAD hunks)
 // ---------------------------------------------------------------------------
 
-export const gotoNextChange: CommandFn = (cx) => vsCommandAndSync(cx, 'workbench.action.editor.nextChange');
-export const gotoPrevChange: CommandFn = (cx) => vsCommandAndSync(cx, 'workbench.action.editor.previousChange');
-export const gotoFirstChange: CommandFn = async (cx) => {
-  await vscode.commands.executeCommand('cursorTop');
-  await vsCommandAndSync(cx, 'workbench.action.editor.nextChange');
-};
-export const gotoLastChange: CommandFn = async (cx) => {
-  await vscode.commands.executeCommand('cursorBottom');
-  await vsCommandAndSync(cx, 'workbench.action.editor.previousChange');
-};
+/** Helix `hunk_range`: whole lines of the hunk; a pure removal is a one-char range at its line. */
+export function hunkRange(doc: TextDoc, hunk: Hunk): Range {
+  const anchor = doc.lineStart(hunk.afterStart);
+  if (hunk.afterStart === hunk.afterEnd) return mkRange(anchor, Math.min(anchor + 1, doc.length));
+  const head = hunk.afterEnd >= doc.lineCount ? doc.length : doc.lineStart(hunk.afterEnd);
+  return mkRange(anchor, head);
+}
+
+async function gotoChange(cx: CommandContext, which: 'next' | 'prev' | 'first' | 'last'): Promise<void> {
+  const hunks = await documentHunks(cx.vs.document);
+  if (hunks === undefined) {
+    // Not a git file: fall back to VS Code's dirty-diff navigation.
+    if (which === 'first') await vscode.commands.executeCommand('cursorTop');
+    if (which === 'last') await vscode.commands.executeCommand('cursorBottom');
+    await vsCommandAndSync(cx, which === 'prev' || which === 'last' ? 'workbench.action.editor.previousChange' : 'workbench.action.editor.nextChange');
+    return;
+  }
+  if (hunks.length === 0) {
+    cx.setError('No changes');
+    return;
+  }
+  const doc = cx.doc;
+  const text = doc.text;
+  const count = cx.count;
+  const forward = which === 'next' || which === 'last';
+  transformSelection(cx, (r) => {
+    let idx: number | undefined;
+    if (which === 'first') idx = 0;
+    else if (which === 'last') idx = hunks.length - 1;
+    else {
+      const line = cursorLine(doc, r);
+      idx = which === 'next' ? nextHunk(hunks, line) : prevHunk(hunks, line);
+      if (idx === undefined) return r;
+      idx = which === 'next' ? Math.min(idx + count - 1, hunks.length - 1) : Math.max(idx - (count - 1), 0);
+    }
+    const target = hunkRange(doc, hunks[idx]);
+    if (cx.extend) {
+      const head = target.head < r.anchor ? target.anchor : target.head;
+      return mkRange(r.anchor, head);
+    }
+    return withDirection(target, forward ? Direction.Forward : Direction.Backward);
+  });
+  void text;
+}
+
+export const gotoNextChange: CommandFn = (cx) => gotoChange(cx, 'next');
+export const gotoPrevChange: CommandFn = (cx) => gotoChange(cx, 'prev');
+export const gotoFirstChange: CommandFn = (cx) => gotoChange(cx, 'first');
+export const gotoLastChange: CommandFn = (cx) => gotoChange(cx, 'last');
+
+/** `mig` / `mag`: the hunk under the cursor (Helix textobject_change; inside == around). */
+export async function changeTextobject(cx: CommandContext): Promise<((r: Range) => Range) | undefined> {
+  const hunks = await documentHunks(cx.vs.document);
+  if (hunks === undefined) {
+    cx.setError('textobject `g` needs a file tracked by git');
+    return undefined;
+  }
+  const doc = cx.doc;
+  return (r) => {
+    const idx = hunkAt(hunks, cursorLine(doc, r), false);
+    return idx === undefined ? r : hunkRange(doc, hunks[idx]);
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Tree-sitter object navigation

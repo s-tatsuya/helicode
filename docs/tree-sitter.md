@@ -1,11 +1,15 @@
 # Tree-sitter support
 
 Helicode ships `web-tree-sitter` (the WASM build of the tree-sitter runtime)
-and grammar binaries from `@vscode/tree-sitter-wasm`, the package VS Code
-itself uses. Parsing happens in the extension host; trees are updated
+and grammar binaries from two sources: `@vscode/tree-sitter-wasm` (the package
+VS Code itself uses) and the upstream grammar releases listed in
+`grammars.json`. Parsing happens in the extension host; trees are updated
 incrementally, so even large files re-parse in a few milliseconds after the
 initial parse. Files larger than `helicode.treeSitter.maxFileSizeKB` are
 skipped.
+
+Grammars are loaded through the VS Code file system API, so tree-sitter also
+works over a remote connection and in the web extension host.
 
 ## What uses tree-sitter
 
@@ -39,10 +43,37 @@ pairs) or report "tree-sitter is not available for this document".
 | `php` | tree-sitter-php | `php` |
 | `ruby` | tree-sitter-ruby | `ruby` |
 | `shellscript` | tree-sitter-bash | `bash` |
+| `html` | tree-sitter-html | `html` |
+| `xml` | tree-sitter-xml | `xml` |
+| `json`, `jsonc`, `jsonl` | tree-sitter-json | `json` |
+| `yaml`, `dockercompose`, `github-actions-workflow` | tree-sitter-yaml | `yaml` |
+| `toml` | tree-sitter-toml | `toml` |
+| `lua` | tree-sitter-lua | `lua` |
+| `markdown` | tree-sitter-markdown | `markdown` |
+| `zig` | tree-sitter-zig | `zig` |
+| `elixir` | tree-sitter-elixir | `elixir` |
+| `makefile` | tree-sitter-make | `make` |
+| `terraform`, `hcl` | tree-sitter-hcl | `hcl` |
 | `ini`, `powershell`, `regex` | bundled | no textobject query (node selection and `mm` only) |
 
-`npm run check-queries` compiles every query against its grammar; all bundled
-pairs compile cleanly. Queries that fail to compile at runtime (for example a
+## Grammars installed on demand
+
+Large grammars are not bundled; `:tree-sitter-install <name>` downloads one
+(checksum verified against `grammars.json`) into the extension's global
+storage, and `:tree-sitter-uninstall` removes it. `:tree-sitter-grammars`
+lists everything that is bundled, installed or available.
+
+| Language | Grammar | Size |
+| --- | --- | --- |
+| `kotlin` | fwcd/tree-sitter-kotlin | 4.1 MB |
+| `swift` | alex-pinkus/tree-sitter-swift | 3.8 MB |
+| `scala` | tree-sitter/tree-sitter-scala | 4.0 MB |
+| `ocaml` | tree-sitter/tree-sitter-ocaml | 4.8 MB |
+| `haskell` | tree-sitter/tree-sitter-haskell | 3.8 MB |
+
+`npm run check-queries` compiles every query against its grammar (`-- --all`
+also checks the optional ones in `wasm-optional/`); all bundled pairs compile
+cleanly. Queries that fail to compile at runtime (for example a
 user supplied grammar of a different version) are salvaged pattern by pattern
 and the dropped patterns are logged (`:log-open`).
 

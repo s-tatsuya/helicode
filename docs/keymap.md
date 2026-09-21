@@ -43,8 +43,8 @@ Legend:
 | `i` / `a` / `I` / `A` | `insert_mode` / `append_mode` / `insert_at_line_start` / `insert_at_line_end` | ✅ | anchors survive the insert session; `a` restores the cursor on `Esc` like Helix |
 | `o` / `O` | `open_below` / `open_above` | ✅ | copies indentation, then VS Code re-indents (`helicode.openLineUsesEditorIndent`) |
 | `.` | repeat last insert | ✅ | replays the entering command and typed keys |
-| `u` / `U` | `undo` / `redo` | 🟡 | VS Code undo stack; an insert session may become several undo steps (VS Code groups typing by word) |
-| `Alt-u` / `Alt-U` | `earlier` / `later` | 🟡 | mapped to undo/redo (no time-based history) |
+| `u` / `U` | `undo` / `redo` | ✅ | Helix history: one revision per command and per insert session (`helicode.undo`) |
+| `Alt-u` / `Alt-U` | `earlier` / `later` | ✅ | counts here, time spans with `:earlier 10s` |
 | `y` / `p` / `P` | `yank` / `paste_after` / `paste_before` | ✅ | linewise paste detection, counts, per-selection values |
 | `"<reg>` | `select_register` | ✅ | registers `"`, `_`, `+`, `*`, `/`, `:`, `@`, `.`, `%`, `#`, `a-z` |
 | `>` / `<` | `indent` / `unindent` | ✅ | |
@@ -54,6 +54,11 @@ Legend:
 | `Ctrl-a` / `Ctrl-x` | `increment` / `decrement` | ✅ | decimal/hex/octal/binary, dates, times; `"#` increments by selection index |
 | `Q` / `q` | `record_macro` / `replay_macro` | ✅ | recorded to `@` (or the selected register) |
 | `Ctrl-z` | `suspend` | ❌ | not applicable in VS Code |
+
+Undo granularity follows Helix: everything one command changes (including the
+keys it waits for, a macro replay or a `.` repeat) is one revision, and an
+insert session from `i` to `Esc` is one revision. Set `helicode.undo` to
+`vscode` to use the host's undo stack instead.
 
 #### Shell
 
@@ -116,7 +121,7 @@ Legend:
 | `z`, `c` | `align_view_center` | ✅ | |
 | `t` | `align_view_top` | ✅ | |
 | `b` | `align_view_bottom` | ✅ | |
-| `m` | `align_view_middle` | ❌ | VS Code cannot scroll horizontally on demand; reveals the cursor |
+| `m` | `align_view_middle` | 🟡 | VS Code cannot scroll horizontally on demand; reveals the cursor |
 | `j`, `Down` / `k`, `Up` | `scroll_down` / `scroll_up` | ✅ | |
 | `Ctrl-f`, `PageDown` / `Ctrl-b`, `PageUp` | `page_down` / `page_up` | ✅ | |
 | `Ctrl-d`, `Space` / `Ctrl-u`, `Backspace` | `page_cursor_half_down` / `page_cursor_half_up` | ✅ | |
@@ -165,9 +170,11 @@ Textobjects after `mi` / `ma`:
 | `T` | test | ✅ (TS) |
 | `e` | data structure entry | ✅ (TS) |
 | `x` | (X)HTML element | ✅ (TS, needs an html grammar) |
-| `g` | VCS change | ❌ | no diff hunk API in VS Code |
+| `g` | VCS change | ✅ | git hunk against HEAD, via the built-in Git extension |
 
 #### Window mode (`Ctrl-w`, also `Space w`)
+
+Helix's own bindings:
 
 | Key | Command | Status | Notes |
 | --- | --- | --- | --- |
@@ -180,6 +187,34 @@ Textobjects after `mi` / `ma`:
 | `h`/`j`/`k`/`l` (+ `Ctrl-`, arrows) | `jump_view_*` | ✅ | |
 | `H`/`J`/`K`/`L` | `swap_view_*` | ✅ | moves the active group |
 | `n s` / `n v` | `hsplit_new` / `vsplit_new` | ✅ | |
+
+The remaining letters mirror [Corral](https://github.com/s-tatsuya/corral)'s
+`ctrl+b` prefix table, so the same key does the same thing after `Ctrl-w` here
+and after the Corral prefix anywhere else in VS Code:
+
+| Key | Action | Without Corral |
+| --- | --- | --- |
+| `c` | new terminal tab in this pane | status message |
+| `S` / `V` | split down / right with a new shell | status message |
+| `z` | zoom the pane | `toggleMaximizeEditorGroup` |
+| `x` | close the pane | `closeEditorsInGroup` |
+| `=` | even out pane sizes | `evenEditorWidths` |
+| `1` - `8` | focus pane N | same |
+| `;` / `,` | last pane / rename terminal | `terminal.rename` |
+| `a` / `A` / `i` / `e` | jump to an agent / spawn one / prompt it / ask about the selection | status message |
+| `E` | focus the Corral view | status message |
+| `m` / `D` | review comment here / send the review | status message |
+| `d` / `]` / `[` | review agent changes / next / previous change | status message |
+| `P` / `g` | popup / lazygit popup | status message |
+| `r` / `R` | apply / save a layout | status message |
+| `W` | new agent worktree | status message |
+| `?` | show the Corral keymap | status message |
+
+`helicode.windowKeysEverywhere` makes the same `Ctrl-w` table available as a
+VS Code chord outside text editors, so one keymap drives the whole window:
+`all` (the default) includes terminals, where `Ctrl-w` then no longer reaches
+the shell; `editors-and-views` leaves terminals alone; `off` keeps window mode
+inside editors.
 
 #### Space mode (`Space`)
 
@@ -196,6 +231,7 @@ Textobjects after `mi` / `ma`:
 | `'` | `last_picker` | ✅ | |
 | `G ...` | debug (sticky) | 🟡 | mapped to VS Code debug commands (`l` start, `c` continue, `n` step over, `i`/`o` step in/out, `b` breakpoint, `t` stop, `h` pause, `r` restart, `v` variables, `Ctrl-c`/`Ctrl-l` edit breakpoint/logpoint) |
 | `w ...` | window mode | ✅ | same as `Ctrl-w` |
+| `t ...` | Corral: terminals, agents, review, worktrees | ✅ | `t` terminal, `a`/`A`/`i`/`e` agents, `s` ACP session, `d`/`m`/`D`/`f`/`R` review, `p`/`g` popups, `w` worktree submenu |
 
 Window mode also carries Corral keys (no-ops unless the Corral extension is installed): `c` new terminal, `S`/`V` split with a shell, `a` jump to agent, `A` spawn agent, `i` prompt agent, `e` ask agent about selection, `m` review comment here, `D` send review, `d` review changes, `]`/`[` next/previous change, `P` popup, `;` last pane, `W` new agent worktree.
 | `y` / `Y` / `p` / `P` / `R` | clipboard yank/paste/replace | ✅ | |
@@ -211,8 +247,8 @@ Window mode also carries Corral keys (no-ops unless the Corral extension is inst
 | Key | Command | Status | Notes |
 | --- | --- | --- | --- |
 | `]d` / `[d` / `]D` / `[D` | diagnostics | ✅ | own implementation over `vscode.languages.getDiagnostics`, wraps |
-| `]g` / `[g` | next/prev change | 🟡 | VS Code dirty-diff navigation |
-| `]G` / `[G` | last/first change | 🟡 | approximated |
+| `]g` / `[g` | next/prev change | ✅ | git hunks against HEAD (falls back to VS Code's dirty diff outside git) |
+| `]G` / `[G` | last/first change | ✅ | |
 | `]f` `[f` `]t` `[t` `]a` `[a` `]c` `[c` `]T` `[T` `]e` `[e` `]x` `[x` | tree-sitter objects | ✅ (TS) | |
 | `]p` / `[p` | paragraphs | ✅ | |
 | `]Space` / `[Space` | `add_newline_below` / `add_newline_above` | ✅ | |
@@ -245,10 +281,29 @@ All normal-mode keys work; the following extend instead of move: `h j k l`,
 
 ## Picker / prompt keys
 
-Helix's picker and prompt keys (`Ctrl-n`/`Ctrl-p`, `Tab` completion, `Ctrl-r`
-register insertion in prompts) are provided by VS Code's QuickPick instead:
-arrow keys move through completions/history, `Enter` accepts, `Esc` cancels.
-`Ctrl-r <reg>` inside prompts is not available. 🟡
+Helix's picker and prompt keys are provided by VS Code's QuickPick: arrow keys
+move through completions and history, `Enter` accepts, `Esc` cancels.
+`Ctrl-r <register>` works in every Helicode prompt (`:`, `/`, `s`, shell
+commands) and inserts the register's content. 🟡
+
+## Which-key infobox
+
+While a minor mode or a key prompt waits for input, Helicode shows the
+available keys in a popup, like Helix's `auto-info`. Type the next key as
+usual, pick an entry with the arrow keys and `Enter`, or press `Esc` to
+cancel. Turn it off with `helicode.autoInfo`, change the delay with
+`helicode.autoInfoDelay`.
+
+## Outside the editor
+
+| Where | Keys |
+| --- | --- |
+| Lists and trees (explorer, search, source control, problems) | `j` `k` `gg` `G` `Ctrl-d` `Ctrl-u` `Ctrl-f` `Ctrl-b`, `h`/`l` collapse/expand, `Enter`/`o` open, `space` toggle, `/` filter, `zc`/`zo`/`ZC` fold |
+| File explorer | `%` new file, `A` new folder, `r` rename, `d` delete, `y`/`x`/`p` copy/cut/paste |
+| Terminals, views, webviews | `Ctrl-w` window mode as a VS Code chord (`all` / `editors-and-views`) |
+| Notebook cell list | see [notebooks-and-webviews.md](notebooks-and-webviews.md) |
+
+`helicode.listNavigation` and `helicode.windowKeysEverywhere` turn these off.
 
 ## Not mapped on purpose
 
@@ -256,3 +311,5 @@ arrow keys move through completions/history, `Enter` accepts, `Esc` cancels.
 - Helix's popup/completion-menu keys are VS Code's own.
 - `Cmd`-based VS Code shortcuts are never overridden; `Ctrl`/`Alt` keys are only
   overridden while `editorTextFocus && helicode.active` and (for most of them) not in insert mode.
+- Any key can be handed back to VS Code with `helicode.passthroughKeys`, e.g.
+  `["ctrl+f", "ctrl+w"]`. For a chord such as `Ctrl-w s`, list the first key.

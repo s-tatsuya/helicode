@@ -10,7 +10,9 @@ import { findMatchingBracketPlaintext, getPair } from '../../core/brackets';
 import { Change } from '../../core/changes';
 import { getSyntax } from '../../treesitter';
 import { nextChar, nextKey, exitSelectMode, transformSelection } from './util';
+import { changeTextobject } from './unimpaired';
 import { keyChar } from '../../core/keys';
+import type { KeyEntry } from '../engine';
 
 export const matchBrackets: CommandFn = async (cx) => {
   const text = cx.doc.text;
@@ -23,10 +25,37 @@ export const matchBrackets: CommandFn = async (cx) => {
   });
 };
 
-const SURROUND_HELP = 'ms: ( [ { < \' " ` | or any char; Enter = newline';
+const SURROUND_HELP = 'ms: surround with';
+const PAIR_ENTRIES: KeyEntry[] = [
+  { key: '(', value: '( ) parentheses' },
+  { key: '[', value: '[ ] brackets' },
+  { key: '{', value: '{ } braces' },
+  { key: '<', value: '< > angle brackets' },
+  { key: "'", value: "' ' single quotes" },
+  { key: '"', value: '" " double quotes' },
+  { key: '`', value: '` ` backticks' },
+  { key: 'ret', value: 'newlines' },
+  { key: '<any>', value: 'the character itself on both sides' },
+];
+const PAIR_TARGET_ENTRIES: KeyEntry[] = [{ key: 'm', value: 'closest surrounding pair' }, ...PAIR_ENTRIES.slice(0, 7)];
+const TEXTOBJECT_ENTRIES: KeyEntry[] = [
+  { key: 'w', value: 'word' },
+  { key: 'W', value: 'WORD' },
+  { key: 'p', value: 'paragraph' },
+  { key: 'f', value: 'function (tree-sitter)' },
+  { key: 't', value: 'type / class (tree-sitter)' },
+  { key: 'a', value: 'argument / parameter (tree-sitter)' },
+  { key: 'c', value: 'comment (tree-sitter)' },
+  { key: 'T', value: 'test (tree-sitter)' },
+  { key: 'e', value: 'data structure entry (tree-sitter)' },
+  { key: 'x', value: '(X)HTML element (tree-sitter)' },
+  { key: 'g', value: 'VCS change (git hunk)' },
+  { key: 'm', value: 'closest surrounding pair' },
+  ...PAIR_ENTRIES.slice(0, 7),
+];
 
 export const surroundAdd: CommandFn = async (cx) => {
-  const k = await nextKey(cx, SURROUND_HELP);
+  const k = await nextKey(cx, SURROUND_HELP, PAIR_ENTRIES);
   if (!k) return;
   let open: string;
   let close: string;
@@ -54,7 +83,7 @@ export const surroundAdd: CommandFn = async (cx) => {
 
 export const surroundReplace: CommandFn = async (cx) => {
   const count = cx.count;
-  const ch = await nextChar(cx, 'mr: pair to replace (m = closest)');
+  const ch = await nextChar(cx, 'mr: pair to replace', PAIR_TARGET_ENTRIES);
   if (ch === undefined) return;
   const surroundCh = ch === 'm' ? undefined : ch;
   const text = cx.doc.text;
@@ -69,7 +98,7 @@ export const surroundReplace: CommandFn = async (cx) => {
   }
   // Show the pair positions while waiting for the replacement char.
   cx.editor.setSelection(mkSelection(changePos.map((p) => point(p)), sel.primaryIndex * 2), { reveal: false });
-  const toCh = await nextChar(cx, 'mr: replacement pair');
+  const toCh = await nextChar(cx, 'mr: replacement pair', PAIR_ENTRIES);
   cx.editor.setSelection(sel, { reveal: false });
   if (toCh === undefined) return;
   const [open, close] = getPair(toCh);
@@ -84,7 +113,7 @@ export const surroundReplace: CommandFn = async (cx) => {
 
 export const surroundDelete: CommandFn = async (cx) => {
   const count = cx.count;
-  const ch = await nextChar(cx, 'md: pair to delete (m = closest)');
+  const ch = await nextChar(cx, 'md: pair to delete', PAIR_TARGET_ENTRIES);
   if (ch === undefined) return;
   const surroundCh = ch === 'm' ? undefined : ch;
   const text = cx.doc.text;
@@ -103,18 +132,19 @@ export const surroundDelete: CommandFn = async (cx) => {
   exitSelectMode(cx);
 };
 
-const TEXTOBJECT_HELP = 'w=word W=WORD p=paragraph f=function t=type a=arg c=comment T=test e=entry x=xml m=closest pair g=change, or a pair char';
+const TEXTOBJECT_HELP = 'select textobject';
 
 function selectTextobject(kind: TextObject): CommandFn {
   return async (cx) => {
     const count = cx.count;
-    const ch = await nextChar(cx, (kind === TextObject.Inside ? 'mi: ' : 'ma: ') + TEXTOBJECT_HELP);
+    const ch = await nextChar(cx, (kind === TextObject.Inside ? 'mi: ' : 'ma: ') + TEXTOBJECT_HELP, TEXTOBJECT_ENTRIES);
     if (ch === undefined) return;
     const motion = async (c: CommandContext) => {
       const doc = c.doc;
       const text = doc.text;
       const syntax = await getSyntax(c.vs.document);
       const tsKind = kind === TextObject.Inside ? 'inside' : 'around';
+      const change = ch === 'g' ? await changeTextobject(c) : undefined;
       const ts = (name: string, r: Range): Range => {
         if (!syntax) {
           c.setError('tree-sitter is not available for this document');
@@ -148,13 +178,12 @@ function selectTextobject(kind: TextObject): CommandFn {
           case 'm':
             return textobjectPairSurround(syntax, text, r, kind, undefined, count);
           case 'g':
-            return r; // VCS change objects are not available in VS Code
+            return change ? change(r) : r;
           default:
             if (!/^[\p{L}\p{N}]$/u.test(ch)) return textobjectPairSurround(syntax, text, r, kind, ch, count);
             return r;
         }
       });
-      if (ch === 'g') c.setError('textobject `g` (VCS change) is not supported in VS Code');
     };
     cx.engine.lastMotion = motion;
     await motion(cx);
