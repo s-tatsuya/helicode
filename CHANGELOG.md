@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Changed
+
+- **Third-party licensing is now documented and shipped.** `THIRD-PARTY-NOTICES.md`
+  lists every component the extension carries - Helix (MPL-2.0), the
+  tree-sitter runtime, the bundled grammar binaries (MIT / Apache-2.0) and
+  smol-toml (BSD-3-Clause) - with its origin and copyright notice, and it is
+  packaged in the `.vsix` together with `licenses/` (MPL-2.0 and Apache-2.0
+  full texts, the `tree-sitter-elixir` NOTICE) and `grammars.json`. The files
+  ported from Helix carry an `SPDX-License-Identifier: MPL-2.0` header,
+  `docs/LICENSE-tutor.md` covers the tutorials copied from `runtime/tutor`,
+  and both READMEs gained an Acknowledgements section. Helicode's own code is
+  unchanged and stays MIT.
+
 ### Fixed
 
 - **`v` + `j`/`k` no longer drops the selection.** With soft wrap on, visual

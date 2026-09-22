@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MPL-2.0
+// Ported from the Helix editor (https://github.com/helix-editor/helix),
+// Copyright (c) 2021 Blaž Hrastnik and the Helix contributors.
+// See THIRD-PARTY-NOTICES.md; the rest of Helicode is MIT (see LICENSE).
 /**
  * Line diff (Myers) producing Helix-style hunks (helix-vcs/src/diff.rs):
  * `before` and `after` are half-open line ranges in the base and the

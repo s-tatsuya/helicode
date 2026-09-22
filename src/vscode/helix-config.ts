@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MPL-2.0
+// Ported from the Helix editor (https://github.com/helix-editor/helix),
+// Copyright (c) 2021 Blaž Hrastnik and the Helix contributors.
+// See THIRD-PARTY-NOTICES.md; the rest of Helicode is MIT (see LICENSE).
 /**
  * Import a real Helix `config.toml`: `[keys.normal]`, `[keys.select]` and
  * `[keys.insert]` become keymap overrides, and the `[editor]` options Helicode

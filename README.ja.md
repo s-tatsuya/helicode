@@ -181,10 +181,40 @@ defaults write com.microsoft.VSCode ApplePressAndHoldEnabled -bool false
 - [docs/tree-sitter.md](docs/tree-sitter.md) - 同梱の文法と追加方法
 - [docs/development.md](docs/development.md) - Nix での開発、テスト、公開
 
+## 謝辞
+
+- **[Helix](https://github.com/helix-editor/helix)** (Blaž Hrastnik 氏と
+  コントリビューターの皆さん)。選択優先の編集モデル、キーマップ、コマンド名、
+  テキストオブジェクトのクエリ、チュートリアルはすべて Helix のものであり、
+  その実装が本拡張の仕様そのものです。Helicode は非公式の独立したプロジェクト
+  であり、Helix プロジェクトとは提携していません。
+- **[tree-sitter](https://github.com/tree-sitter/tree-sitter)** (Max Brunsfeld
+  氏)、[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) に列挙した各文法の
+  作者の皆さん、および VS Code 本体が使う WASM をビルドしている
+  **[@vscode/tree-sitter-wasm](https://github.com/microsoft/vscode-tree-sitter-wasm)**。
+- **[smol-toml](https://github.com/squirrelchat/smol-toml)** (`:config-import`
+  で `config.toml` を読むために使用)。
+- **[Corral](https://github.com/s-tatsuya/corral)** (`Ctrl-w` のペイン操作は
+  Corral のプレフィックス表に合わせています)。
+- 先行するモーダル編集拡張 **VSCodeVim**、**Dance**、
+  **vscode-helix-emulation**。VS Code 上で何ができるかを学ばせてもらいました
+  (コードの流用はしていません)。
+
 ## ライセンス
 
-MIT。`queries/` の tree-sitter クエリは Helix エディタ由来 (MPL-2.0)、文法の
-WASM は `@vscode/tree-sitter-wasm` (MIT。個別のライセンスは
-`node_modules/@vscode/tree-sitter-wasm/cgmanifest.json`) と `grammars.json` に
-記載した各文法の配布物です。`grammars.json` に入手元とライセンスを記録して
-います。
+Helicode 本体は **MIT** ([LICENSE](LICENSE)) です。同梱している第三者の成果物
+はそれぞれのライセンスに従います。
+
+- **MPL-2.0** (Helix 由来): `queries/` の tree-sitter クエリ、
+  `docs/tutor*.txt` のチュートリアル、`SPDX-License-Identifier: MPL-2.0`
+  ヘッダーを持つソースファイル (Helix から移植した部分)。これらは MPL のまま
+  であり、拡張全体を MIT で配布できるのは MPL-2.0 § 3.3 (Larger Work) に
+  よります。全文は [licenses/MPL-2.0.txt](licenses/MPL-2.0.txt)。ソースコード
+  形式は本リポジトリと <https://github.com/helix-editor/helix> で入手できます。
+- **MIT / Apache-2.0 / BSD-3-Clause**: tree-sitter ランタイム、`wasm/` に同梱
+  した文法バイナリ、`smol-toml`。
+
+各コンポーネントの入手元と著作権表示は
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) にまとめてあり、
+[licenses/](licenses) とともに `.vsix` にも同梱しています。文法バイナリの URL、
+SHA-256、ライセンスは `grammars.json` に記録しています。

@@ -197,10 +197,43 @@ repeat: `10j`, `5x`, `3dd`.
 - [docs/development.md](docs/development.md) - Nix workflow, tests, packaging
 - [README.ja.md](README.ja.md) - 日本語版の README (`:tutor ja` で日本語チュートリアル)
 
+## Acknowledgements
+
+- **[Helix](https://github.com/helix-editor/helix)** by Blaž Hrastnik and its
+  contributors. Helicode exists because of it: the selection-first model, the
+  keymap, the command names, the textobject queries and the tutorial all come
+  from Helix, and its source is the specification this extension is written
+  against. Helicode is an independent project and is not affiliated with or
+  endorsed by the Helix project.
+- **[tree-sitter](https://github.com/tree-sitter/tree-sitter)** by Max
+  Brunsfeld, the grammar authors listed in
+  [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md), and
+  **[@vscode/tree-sitter-wasm](https://github.com/microsoft/vscode-tree-sitter-wasm)**,
+  which builds the WASM binaries VS Code itself uses.
+- **[smol-toml](https://github.com/squirrelchat/smol-toml)**, which parses your
+  `config.toml` for `:config-import`.
+- **[Corral](https://github.com/s-tatsuya/corral)**, whose pane prefix table
+  `Ctrl-w` mirrors so one keymap drives the whole window.
+- The modal-editing extensions that came first - **VSCodeVim**, **Dance** and
+  **vscode-helix-emulation** - for showing what works inside VS Code. No code
+  was taken from them; only the problems they solved were studied.
+
 ## License
 
-MIT. Tree-sitter queries under `queries/` are from the Helix editor (MPL-2.0),
-grammar WASM binaries come from `@vscode/tree-sitter-wasm` (MIT, individual
-grammar licenses in `node_modules/@vscode/tree-sitter-wasm/cgmanifest.json`)
-and from the upstream grammar releases listed in `grammars.json`, which records
-each grammar's source and license.
+Helicode is **MIT** licensed (see [LICENSE](LICENSE)), with third-party
+material under its own terms:
+
+- **MPL-2.0** (Helix): the tree-sitter queries in `queries/`, the tutorials in
+  `docs/tutor*.txt`, and every source file carrying an
+  `SPDX-License-Identifier: MPL-2.0` header - the parts ported from the Helix
+  source. Those files stay under the MPL; MPL-2.0 § 3.3 is what lets the
+  extension as a whole ship under the MIT license. Full text:
+  [licenses/MPL-2.0.txt](licenses/MPL-2.0.txt). Their Source Code Form is this
+  repository and <https://github.com/helix-editor/helix>.
+- **MIT / Apache-2.0 / BSD-3-Clause**: the tree-sitter runtime, the bundled
+  grammar binaries in `wasm/`, and `smol-toml`.
+
+Every component, its origin and its copyright notice is listed in
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md), which ships inside the
+`.vsix` together with [licenses/](licenses). `grammars.json` records the URL,
+SHA-256 and license of each grammar binary.

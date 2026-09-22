@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MPL-2.0
+// Ported from the Helix editor (https://github.com/helix-editor/helix),
+// Copyright (c) 2021 Blaž Hrastnik and the Helix contributors.
+// See THIRD-PARTY-NOTICES.md; the rest of Helicode is MIT (see LICENSE).
 /**
  * Bracket pairs and plaintext bracket matching (helix-core/src/match_brackets.rs).
  * Tree-sitter aware matching lives in treesitter/nodes.ts and falls back here.

@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MPL-2.0
+// Ported from the Helix editor (https://github.com/helix-editor/helix),
+// Copyright (c) 2021 Blaž Hrastnik and the Helix contributors.
+// See THIRD-PARTY-NOTICES.md; the rest of Helicode is MIT (see LICENSE).
 /**
  * View mode (z / Z), window mode (C-w), space mode (pickers, LSP, clipboard,
  * comments) and goto-LSP commands. Most of these map onto VS Code commands.
