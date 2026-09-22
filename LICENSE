@@ -19,3 +19,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+Helicode also contains third-party material that is licensed separately:
+parts ported from the Helix editor and the tree-sitter queries and tutorials
+copied from it are under the Mozilla Public License 2.0, and the bundled
+tree-sitter runtime and grammar binaries are under the MIT, Apache-2.0 and
+BSD-3-Clause licenses. See THIRD-PARTY-NOTICES.md and the licenses/ directory
+for the components, their origins and their license texts.

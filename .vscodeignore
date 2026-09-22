@@ -15,7 +15,6 @@ flake.nix
 flake.lock
 tsconfig*.json
 esbuild.mjs
-grammars.json
 **/*.map
 **/*.ts
 !dist/**
@@ -25,3 +24,6 @@ dist/**/*.map
 !docs/**
 !media/icon.png
 **/*.js.map
+!THIRD-PARTY-NOTICES.md
+!licenses/**
+!grammars.json
