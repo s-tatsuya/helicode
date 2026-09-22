@@ -164,6 +164,27 @@ the first config it finds in `.helix/config.toml`, `$XDG_CONFIG_HOME/helix` or
 On the first start Helicode offers this once; `helicode.importHelixConfig`
 controls that (`ask`, `always`, `never`).
 
+## Troubleshooting
+
+### Holding a key does not repeat (macOS)
+
+Every printable Helix key (`x`, `j`, `k`, `d`, ...) reaches Helicode through
+VS Code's `type` command, and macOS's "press and hold" feature (the accent
+popup, `ApplePressAndHoldEnabled`, on by default) stops Electron apps from
+delivering repeated key events on that path - so holding `x` deletes one line
+and holding `j` moves one line. Run this once and then quit and restart VS
+Code completely (not just reload the window):
+
+```sh
+defaults write com.microsoft.VSCode ApplePressAndHoldEnabled -bool false
+# Insiders: com.microsoft.VSCodeInsiders
+```
+
+`defaults delete com.microsoft.VSCode ApplePressAndHoldEnabled` puts the
+accent popup back. How fast keys repeat afterwards is System Settings >
+Keyboard > Key Repeat / Delay Until Repeat. Counts never depend on key
+repeat: `10j`, `5x`, `3dd`.
+
 ## Documentation
 
 - [docs/keymap.md](docs/keymap.md) - every Helix key and whether it is supported

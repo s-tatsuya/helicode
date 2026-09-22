@@ -225,7 +225,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.window.onDidChangeTextEditorSelection((e) => {
       if (!eng.enabled || e.textEditor !== vscode.window.activeTextEditor) return;
       const st = eng.state(e.textEditor);
-      if (st.syncFromVscode()) eng.render(eng);
+      if (st.syncFromVscode(e.selections)) eng.render(eng);
     }),
     vscode.workspace.onDidChangeTextDocument((e) => {
       ts.onDocumentChanged(e);

@@ -54,6 +54,17 @@ export class EditorState {
   /** Set by append_mode: move the cursor back by one when leaving insert mode. */
   restoreCursor = false;
   private lastSet: readonly vscode.Selection[] = [];
+  /**
+   * Selections we pushed to VS Code ourselves and whose change event has not
+   * arrived yet. VS Code reports them back asynchronously, and the renderer's
+   * echo can land *after* the command replaced them again (`cursorMove`
+   * delegation in visual line movement does exactly that), so without this
+   * `syncFromVscode` would mistake our own intermediate cursor for a user
+   * selection and drop the Helix range.
+   */
+  private ownWrites: vscode.Selection[][] = [];
+  /** > 0 while a command drives VS Code's own cursor (see `withOwnCursorMoves`). */
+  private ownCursorMoves = 0;
   /** Last selection before the most recent edit (for `g.`). */
   lastModification: number | undefined;
 
@@ -135,9 +146,9 @@ export class EditorState {
     const mode = this.getMode();
     const vsSels = this.toVscode(normalized, mode);
     if (!selectionsEqual(vsSels, this.vs.selections)) {
-      this.vs.selections = vsSels;
+      this.pushToVscode(vsSels);
     }
-    this.lastSet = this.vs.selections;
+    this.lastSet = vsSels;
     if (mode === 'insert') this.insertAnchors = this.orderedRanges(normalized).map((r) => r.anchor);
     if (opts.reveal !== false) this.revealCursor();
     this.decorate();
@@ -149,20 +160,65 @@ export class EditorState {
     return order.map((i) => sel.ranges[i]);
   }
 
+  /**
+   * Write selections to the editor, remembering them so the change event they
+   * cause is recognised as our own. Commands that need VS Code to move the
+   * cursor for them (visual line movement with soft wrap) must use this
+   * instead of assigning `editor.selections` directly.
+   */
+  pushToVscode(sels: readonly vscode.Selection[]): void {
+    this.rememberOwnWrite(sels);
+    this.vs.selections = [...sels];
+  }
+
+  /**
+   * Same, for a cursor VS Code moved on our behalf (`cursorMove`): nothing to
+   * write, but its change event is ours all the same.
+   */
+  rememberOwnWrite(sels: readonly vscode.Selection[]): void {
+    this.ownWrites.push([...sels]);
+    if (this.ownWrites.length > 8) this.ownWrites.shift();
+  }
+
+  /**
+   * Runs `work` while every selection change is treated as ours. Commands that
+   * let VS Code move the cursor (visual line movement asks `cursorMove` to
+   * honour soft wrap) get the change event *while they are still running*, and
+   * adopting that bare cursor would throw away the Helix range they are in the
+   * middle of extending. `work` is responsible for the selection it leaves
+   * behind.
+   */
+  async withOwnCursorMoves<T>(work: () => Promise<T>): Promise<T> {
+    this.ownCursorMoves++;
+    try {
+      return await work();
+    } finally {
+      this.ownCursorMoves--;
+    }
+  }
+
   /** Called when VS Code reports a selection change we did not make (mouse, other commands). */
-  syncFromVscode(): boolean {
-    if (selectionsEqual(this.vs.selections, this.lastSet)) return false;
+  syncFromVscode(sels: readonly vscode.Selection[] = this.vs.selections): boolean {
+    if (this.ownCursorMoves > 0) return false;
+    // Our own write (or the cursor VS Code moved for us) coming back: not user input.
+    const own = this.ownWrites.findIndex((w) => selectionsEqual(w, sels));
+    if (own >= 0) {
+      this.ownWrites.splice(0, own + 1);
+      return false;
+    }
+    if (selectionsEqual(sels, this.lastSet)) return false;
+    this.ownWrites = [];
     const mode = this.getMode();
     if (mode === 'insert') {
       // Keep tracked anchors if the cursor count is unchanged; otherwise reset them.
-      if (!this.insertAnchors || this.insertAnchors.length !== this.vs.selections.length) {
-        this.insertAnchors = this.vs.selections.map((s) => this.doc.offset(s.active));
+      if (!this.insertAnchors || this.insertAnchors.length !== sels.length) {
+        this.insertAnchors = sels.map((s) => this.doc.offset(s.active));
       }
-      this.lastSet = this.vs.selections;
+      this.lastSet = sels;
       return true;
     }
-    this.selection = this.fromVscode(this.vs.selections);
-    this.lastSet = this.vs.selections;
+    this.selection = this.fromVscode(sels);
+    this.lastSet = sels;
     this.decorate();
     return true;
   }
@@ -188,8 +244,8 @@ export class EditorState {
     this.restoreCursor = restoreCursor;
     this.selection = sel;
     const vsSels = this.toVscode(sel, 'insert');
-    this.vs.selections = vsSels;
-    this.lastSet = this.vs.selections;
+    this.pushToVscode(vsSels);
+    this.lastSet = vsSels;
     this.insertAnchors = this.orderedRanges(sel).map((r) => r.anchor);
     this.decorate();
     this.revealCursor();

@@ -421,6 +421,92 @@ test('passthrough keys are exposed as context keys', async () => {
   }
 });
 
+
+test('select mode extends with h j k l', async () => {
+  const ed = await open('abcd\nefgh\nijkl\n');
+  await keys('j'); // line 1, col 0
+  await keys('v');
+  const anchor = sel(ed)[0][0];
+  assert.equal(anchor, 5, 'v keeps the cursor range (anchor at the start of line 1)');
+  await keys('l');
+  assert.deepEqual(sel(ed), [[5, 7]], 'l extends right');
+  await keys('j');
+  assert.deepEqual(sel(ed), [[5, 12]], 'j extends down');
+  await keys('k');
+  assert.equal(sel(ed)[0][0], 5, 'k keeps the anchor');
+  assert.equal(ed.selection.isEmpty, false, 'k does not collapse the selection');
+  await keys('h');
+  assert.equal(sel(ed)[0][0], 5, 'h keeps the anchor');
+});
+
+test('select mode extends with j/k when word wrap is on', async () => {
+  const cfg = vscode.workspace.getConfiguration('editor');
+  await cfg.update('wordWrap', 'on', vscode.ConfigurationTarget.Global);
+  await sleep(200);
+  try {
+    const ed = await open('abcd\nefgh\nijkl\n');
+    await keys('j'); // line 1, col 0
+    await keys('v');
+    assert.equal(sel(ed)[0][0], 5, 'v keeps the anchor at the start of line 1');
+    await keys('j');
+    assert.deepEqual(sel(ed), [[5, 11]], 'j extends down (wrapped-line path)');
+    await keys('k');
+    assert.equal(sel(ed)[0][0], 5, 'k keeps the anchor');
+  } finally {
+    await cfg.update('wordWrap', undefined, vscode.ConfigurationTarget.Global);
+    await sleep(100);
+  }
+});
+
+test('markdown wraps by default: v + j keeps the selection', async () => {
+  // VS Code's built-in markdown extension contributes
+  // "[markdown]": { "editor.wordWrap": "on" }, so every .md file takes the
+  // wrapped-line path even when the user configured nothing.
+  const ed = await open('abcd\nefgh\nijkl\n', 'markdown');
+  assert.equal(vscode.workspace.getConfiguration('editor', ed.document).get('wordWrap'), 'on', 'markdown wraps out of the box');
+  await keys('j');
+  await keys('v');
+  await keys('j');
+  assert.deepEqual(sel(ed), [[5, 11]], 'the anchor from v survives');
+});
+
+test('select mode survives keys typed back to back', async () => {
+  // VS Code reports selection changes back asynchronously; when the keys come
+  // faster than the echoes, an echo of an earlier (one-grapheme, therefore
+  // empty) selection must not replace the range being extended.
+  const ed = await open('abcdefgh\nijklmnop\nqrstuvwx\n');
+  await keys('v');
+  await Promise.all(['l', 'l', 'j', 'l'].map((k) => vscode.commands.executeCommand('helicode.typeText', k)));
+  await sleep(150);
+  assert.deepEqual(sel(ed), [[0, 13]], 'the anchor stays at 0 while the head moves');
+});
+
+test('j/k keep the sticky column across short lines when word wrap is on', async () => {
+  const cfg = vscode.workspace.getConfiguration('editor');
+  await cfg.update('wordWrap', 'on', vscode.ConfigurationTarget.Global);
+  await sleep(200);
+  try {
+    const ed = await open('abcdefgh\nx\nabcdefgh\n');
+    await keys('4l');
+    assert.equal(ed.selection.active.character, 4);
+    await keys('j'); // line 1 is "x": the cursor has to fall back to column 0/1
+    assert.equal(ed.selection.active.line, 1);
+    await keys('j');
+    assert.equal(ed.selection.active.line, 2);
+    assert.equal(ed.selection.active.character, 4, 'the column from line 0 comes back on line 2');
+    await keys('gg');
+    await keys('4l');
+    await keys('v');
+    await keys('j');
+    await keys('j');
+    // select mode: anchor on line 0 col 4, head one past the cursor on line 2 col 4
+    assert.deepEqual(sel(ed), [[4, 16]], 'extending down keeps the column too');
+  } finally {
+    await cfg.update('wordWrap', undefined, vscode.ConfigurationTarget.Global);
+    await sleep(100);
+  }
+});
+
 // ---------------------------------------------------------------------------
 
 export async function run(): Promise<void> {

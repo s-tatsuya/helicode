@@ -64,15 +64,50 @@ async function moveVisual(cx: CommandContext, dir: Direction, extend: boolean): 
     moveVertically(cx, dir, extend);
     return;
   }
-  // Single cursor with soft wrap: delegate to VS Code (cursorMove by wrappedLine).
-  const text = cx.doc.text;
-  const r = primary(cx.selection);
+  // Single cursor with soft wrap: only VS Code knows where the rows break, so
+  // it moves the cursor and we ask it where the row we landed on starts and
+  // ends. The column is kept by Helicode (`stickyCol` holds the column inside
+  // the wrapped row here; moveVertically stores a visual column in the logical
+  // line - the two paths never run for the same editor), because every cursor
+  // write resets the column VS Code itself would remember.
+  const doc = cx.doc;
+  const text = doc.text;
+  const sel = cx.selection;
+  const r = primary(sel);
   const c = rangeCursor(text, r);
-  const pos = cx.doc.position(c);
-  cx.vs.selections = [new vscode.Selection(pos, pos)];
-  await vscode.commands.executeCommand('cursorMove', { to: dir === Direction.Forward ? 'down' : 'up', by: 'wrappedLine', value: cx.count });
-  const np = cx.doc.offset(cx.vs.selection.active);
-  cx.editor.setSelection(transform(cx.selection, (rr, i) => (i === cx.selection.primaryIndex ? putCursor(text, rr, np, extend) : rr)));
+  await cx.editor.withOwnCursorMoves(async () => {
+    const at = (offset: number) => {
+      const p = doc.position(offset);
+      cx.editor.pushToVscode([new vscode.Selection(p, p)]);
+    };
+    const move = async (to: string, by?: string, value?: number): Promise<number> => {
+      await vscode.commands.executeCommand('cursorMove', { to, by, value });
+      return doc.offset(cx.vs.selection.active);
+    };
+    at(c);
+    // The column is only measured when the last command was not a vertical
+    // move; repeated j/k reuse the one the range carries.
+    let col = r.stickyCol;
+    if (col === undefined) {
+      col = c - (await move('wrappedLineStart'));
+      at(c);
+    }
+    await move(dir === Direction.Forward ? 'down' : 'up', 'wrappedLine', cx.count);
+    const rowEnd = await move('wrappedLineEnd');
+    const newRowStart = await move('wrappedLineStart');
+    // The cursor VS Code moved for us is reported back asynchronously: ours.
+    cx.editor.rememberOwnWrite(cx.vs.selections);
+    if (c >= newRowStart && c <= rowEnd) {
+      // Still the same row - the first or last one of the document. Helix
+      // leaves the selection alone there.
+      cx.editor.setSelection(transform(sel, (rr, i) => (i === sel.primaryIndex ? { ...rr, stickyCol: col } : rr)));
+      return;
+    }
+    const np = Math.min(newRowStart + col, Math.max(rowEnd, newRowStart));
+    cx.editor.setSelection(
+      transform(sel, (rr, i) => (i === sel.primaryIndex ? { ...putCursor(text, rr, np, extend), stickyCol: col } : rr)),
+    );
+  });
 }
 
 export const moveVisualLineDown: CommandFn = (cx) => moveVisual(cx, Direction.Forward, false);

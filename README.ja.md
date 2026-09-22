@@ -148,6 +148,28 @@ Nix を使わない場合は Node.js 22 だけあれば動きます。Windows �
 初回起動時に一度だけ取り込むかどうかを確認します。この挙動は
 `helicode.importHelixConfig` (`ask`、`always`、`never`) で変えられます。
 
+## うまく動かないとき
+
+### キーを長押ししても繰り返されない (macOS)
+
+`x`、`j`、`k`、`d` のような印字できるキーは VS Code の `type` コマンド経由で
+Helicode に届きます。macOS の「押し続けてアクセント文字を選ぶ」機能
+(`ApplePressAndHoldEnabled`、既定で有効) は Electron アプリでこの経路のキー
+リピートを止めてしまうため、`x` を長押ししても 1 行しか消えず、`j` や `k` も
+1 回しか動きません。次を一度だけ実行し、ウィンドウの再読み込みではなく VS Code
+を完全に終了してから起動し直してください。
+
+```sh
+defaults write com.microsoft.VSCode ApplePressAndHoldEnabled -bool false
+# Insiders は com.microsoft.VSCodeInsiders
+```
+
+元に戻す (アクセント文字のポップアップを復活させる) には
+`defaults delete com.microsoft.VSCode ApplePressAndHoldEnabled` を実行します。
+リピートの速さは「システム設定 > キーボード」の「キーのリピート速度 /
+リピート入力認識までの時間」で決まります。なお回数指定 (`10j`、`5x`、`3dd`)
+はキーリピートに関係なく使えます。
+
 ## ドキュメント
 
 - [docs/keymap.md](docs/keymap.md) - Helix のすべてのキーと対応状況

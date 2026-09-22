@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- **`v` + `j`/`k` no longer drops the selection.** With soft wrap on, visual
+  line movement asks VS Code's `cursorMove` to honour the wrapped rows; the
+  selection change that causes was reported back while the command was still
+  running and was mistaken for a selection the user made, which replaced the
+  range being extended with a bare cursor. Selections Helicode writes itself
+  (and cursors VS Code moves on its behalf) are now recognised as its own.
+- **`j`/`k` keep their column with soft wrap on.** Every cursor write resets
+  the column VS Code remembers for vertical movement, so moving across a short
+  line pulled the cursor to that line's column and kept it there. Helicode now
+  tracks the column inside the wrapped row itself, like Helix does.
+- Holding a key does not repeat on macOS unless the system's press-and-hold
+  feature is off; both READMEs now say so (`defaults write
+  com.microsoft.VSCode ApplePressAndHoldEnabled -bool false`).
+
 ## 0.2.0 (2026-09-19)
 
 Closes the remaining gaps against Helix and makes one keymap drive the whole
